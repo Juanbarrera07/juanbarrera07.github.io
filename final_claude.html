@@ -1,0 +1,2815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoForgeSpatial — Juan Barrera | Spatial Intelligence Perth WA</title>
+<meta name="description" content="Geographic & Environmental Engineer specialising in drone mapping, GIS, remote sensing, mining analytics and GeoAI. Based in Perth, Western Australia.">
+<meta name="keywords" content="GIS, Geospatial, Drone Mapping, RPAS, Remote Sensing, Mining, Environmental, Perth WA, ArcGIS, Python, TerraForge">
+<meta name="author" content="Juan Barrera">
+<link rel="canonical" href="https://juanbarrera07.github.io">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="GeoForgeSpatial — Spatial Intelligence by Juan Barrera">
+<meta property="og:description" content="Geographic & Environmental Engineer. Drone mapping, GIS automation, mining analytics & GeoAI. Perth, WA.">
+<meta property="og:url" content="https://juanbarrera07.github.io">
+<meta property="og:site_name" content="GeoForgeSpatial">
+<meta property="og:image" content="https://juanbarrera07.github.io/og-image.jpg">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GeoForgeSpatial — Spatial Intelligence by Juan Barrera">
+<meta name="twitter:description" content="Geographic & Environmental Engineer. Perth, WA.">
+<meta name="twitter:image" content="https://juanbarrera07.github.io/og-image.jpg">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"Person",
+      "@id":"https://juanbarrera07.github.io/#person",
+      "name":"Juan Barrera",
+      "jobTitle":"Geographic & Environmental Engineer",
+      "description":"Geospatial Engineer specialising in drone mapping, GIS, remote sensing and mining analytics in Perth, Western Australia.",
+      "url":"https://juanbarrera07.github.io",
+      "sameAs":["https://www.linkedin.com/in/juanbarrerac","https://github.com/juanbarrera07"],
+      "address":{"@type":"PostalAddress","addressLocality":"Perth","addressRegion":"WA","addressCountry":"AU"},
+      "knowsAbout":["GIS","Drone Mapping","Remote Sensing","Mining Analytics","GeoAI","Python","ArcGIS","Environmental Engineering","RPAS","Photogrammetry"]
+    },
+    {
+      "@type":"WebSite",
+      "@id":"https://juanbarrera07.github.io/#website",
+      "name":"GeoForgeSpatial",
+      "url":"https://juanbarrera07.github.io",
+      "author":{"@id":"https://juanbarrera07.github.io/#person"}
+    }
+  ]
+}
+</script>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+
+<!-- Google Fonts: Work Sans + Lora + IBM Plex Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════ */
+:root {
+  --bg:        #090d0f;
+  --bg-elev:   #111519;
+  --surface:   #161b20;
+  --surface-2: #1c2229;
+  --border:    rgba(220,215,206,0.07);
+  --border-md: rgba(220,215,206,0.13);
+  --border-lg: rgba(220,215,206,0.22);
+
+  --text:      #dcd7ce;
+  --text-dim:  #9fa49c;
+  --text-mute: #636860;
+
+  /* GEO PALETTE */
+  --terra:     #c97f3e;
+  --terra-g:   rgba(201,127,62,.18);
+  --terra-l:   rgba(201,127,62,.40);
+  --moss:      #8aaa62;
+  --moss-g:    rgba(138,170,98,.18);
+  --sky:       #5f9db5;
+
+  /* TECH ACCENT */
+  --cyan:      #00ccf0;
+  --cyan-g:    rgba(0,204,240,.22);
+  --cyan-b:    rgba(0,204,240,.08);
+
+  /* TYPOGRAPHY */
+  --FD: 'Work Sans', sans-serif;
+  --FB: 'Lora', Georgia, serif;
+  --FM: 'IBM Plex Mono', monospace;
+
+  /* LAYOUT */
+  --max: 1340px;
+  --pad: clamp(1.4rem, 4.5vw, 3.2rem);
+  --nav-h: 64px;
+}
+
+/* ═══════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;font-size:16px;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--FB);
+  line-height:1.7;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+::selection{background:var(--cyan);color:#000;}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;font-family:inherit;border:none;background:none;}
+
+/* ═══════════════════════════════════════
+   BACKGROUND: GRID + GRAIN + TOPO
+═══════════════════════════════════════ */
+.bg-layers{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+}
+.bg-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,204,240,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,204,240,.05) 1px,transparent 1px);
+  background-size:55px 55px;
+  opacity:.18;
+}
+.bg-topo{
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg width='1800' height='1200' viewBox='0 0 1800 1200' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='f'%3E%3CfeTurbulence baseFrequency='.008 .012' numOctaves='3' seed='7'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='60'/%3E%3C/filter%3E%3C/defs%3E%3Cg fill='none' filter='url(%23f)'%3E%3Cpath stroke='%23c97f3e' stroke-width='.9' opacity='.55' d='M-200 130Q500 90 900 170T2000 140M-200 240Q500 200 900 280T2000 250M-200 360Q500 320 900 400T2000 370M-200 490Q500 450 900 530T2000 500M-200 625Q500 585 900 665T2000 635M-200 770Q500 730 900 810T2000 780M-200 920Q500 880 900 960T2000 930'/%3E%3Cpath stroke='%235f9db5' stroke-width='.5' opacity='.28' d='M-200 185Q500 145 900 225T2000 195M-200 415Q500 375 900 455T2000 425M-200 700Q500 660 900 740T2000 710'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:cover;
+  background-position:center;
+  opacity:1;
+}
+.bg-vignette{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at center,transparent 30%,rgba(9,13,15,.85) 100%);
+}
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+#nav{
+  position:fixed;top:0;left:0;right:0;
+  z-index:1000;
+  height:var(--nav-h);
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 var(--pad);
+  background:rgba(9,13,15,.82);
+  backdrop-filter:blur(18px) saturate(1.4);
+  -webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s,background .3s;
+}
+#nav.scrolled{border-bottom-color:var(--border);}
+
+.nav-logo{
+  font-family:var(--FM);
+  font-size:.82rem;
+  font-weight:500;
+  letter-spacing:.04em;
+  color:var(--text-dim);
+  display:flex;
+  align-items:center;
+  gap:.7rem;
+  user-select:none;
+}
+.nav-logo .brand{color:var(--text);font-weight:500;}
+.nav-logo .brand b{color:var(--cyan);}
+.nav-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--moss);
+  box-shadow:0 0 10px var(--moss);
+  flex-shrink:0;
+  animation:glow-pulse 2.6s ease-in-out infinite;
+}
+@keyframes glow-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.45;transform:scale(1.5);}}
+
+.nav-tabs{
+  display:flex;gap:.2rem;
+  background:rgba(255,255,255,.035);
+  padding:.35rem;
+  border:1px solid var(--border-md);
+  border-radius:3px;
+}
+.nav-tab{
+  font-family:var(--FM);
+  font-size:.72rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:.42rem .9rem;
+  border-radius:2px;
+  color:var(--text-mute);
+  transition:all .22s;
+  white-space:nowrap;
+}
+.nav-tab:hover{color:var(--terra);}
+.nav-tab.active{
+  background:var(--cyan);
+  color:#000;
+  font-weight:600;
+}
+.nav-cta-btn{
+  font-family:var(--FM);
+  font-size:.74rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:.5rem 1.1rem;
+  border:1px solid var(--cyan);
+  color:var(--cyan);
+  border-radius:2px;
+  transition:all .22s;
+}
+.nav-cta-btn:hover{
+  background:var(--cyan);
+  color:#000;
+  box-shadow:0 0 18px var(--cyan-g);
+}
+@media(max-width:860px){.nav-tabs{display:none;}}
+@media(max-width:640px){.nav-cta-btn{display:none;}}
+
+/* ═══════════════════════════════════════
+   DOT NAV (right fixed)
+═══════════════════════════════════════ */
+.dot-nav{
+  position:fixed;
+  right:1.6rem;top:50%;
+  transform:translateY(-50%);
+  z-index:900;
+  display:flex;flex-direction:column;
+  gap:1.2rem;align-items:flex-end;
+}
+.dot-nav-item{
+  display:flex;align-items:center;gap:.7rem;
+  cursor:pointer;
+}
+.dot-nav-label{
+  font-family:var(--FM);
+  font-size:.62rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--text-mute);
+  opacity:0;
+  transition:opacity .2s;
+  white-space:nowrap;
+}
+.dot-nav-item:hover .dot-nav-label,
+.dot-nav-item.active .dot-nav-label{opacity:1;}
+.dot-nav-item.active .dot-nav-label{color:var(--terra);}
+
+.dot-pip{
+  width:7px;height:7px;
+  border-radius:50%;
+  background:var(--text-mute);
+  transition:all .28s;
+  flex-shrink:0;
+}
+.dot-nav-item:hover .dot-pip{background:var(--terra);}
+.dot-nav-item.active .dot-pip{
+  background:var(--cyan);
+  box-shadow:0 0 0 3px var(--cyan-b),0 0 10px var(--cyan-g);
+  width:9px;height:9px;
+}
+@media(max-width:960px){.dot-nav{display:none;}}
+
+/* ═══════════════════════════════════════
+   SECTIONS & CONTAINERS
+═══════════════════════════════════════ */
+main{position:relative;z-index:2;}
+.section{
+  padding:5rem var(--pad);
+  max-width:var(--max);
+  margin:0 auto;
+}
+.section-full{
+  padding:5rem var(--pad);
+  max-width:var(--max);
+  margin:0 auto;
+}
+@media(max-width:720px){.section,.section-full{padding:4.5rem var(--pad);}}
+
+.section-label{
+  font-family:var(--FM);
+  font-size:.68rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--cyan);
+  display:flex;align-items:center;gap:.8rem;
+  margin-bottom:1.2rem;
+}
+.section-label::before{content:'';width:22px;height:1px;background:var(--cyan);}
+
+.section-title{
+  font-family:var(--FD);
+  font-size:clamp(1.9rem,4vw,3rem);
+  font-weight:700;
+  line-height:1.06;
+  letter-spacing:-.025em;
+  margin-bottom:1.4rem;
+  max-width:820px;
+}
+.section-title em{
+  font-family:var(--FB);
+  font-style:italic;
+  font-weight:400;
+  color:var(--terra);
+}
+.section-lead{
+  font-family:var(--FB);
+  font-size:1.08rem;
+  color:var(--text-dim);
+  max-width:680px;
+  margin-bottom:2.2rem;
+}
+
+/* CHAPTER DIVIDERS */
+.ch-divider{
+  max-width:var(--max);
+  margin:0 auto;
+  padding:1.5rem var(--pad) 0;
+  display:flex;align-items:center;gap:1.5rem;
+}
+.ch-divider-line{flex:1;height:1px;background:var(--border-md);}
+.ch-divider-meta{
+  font-family:var(--FM);
+  font-size:.65rem;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--text-mute);
+  white-space:nowrap;
+}
+
+/* ═══════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════ */
+.btn{
+  font-family:var(--FM);
+  font-size:.78rem;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  padding:.82rem 1.5rem;
+  border:1px solid var(--border-lg);
+  border-radius:2px;
+  color:var(--text);
+  background:transparent;
+  display:inline-flex;align-items:center;gap:.55rem;
+  transition:all .25s;
+  cursor:pointer;
+}
+.btn:hover{border-color:var(--terra);color:var(--terra);transform:translateY(-2px);}
+.btn svg{width:13px;height:13px;flex-shrink:0;}
+.btn-primary{
+  background:var(--cyan);
+  border-color:var(--cyan);
+  color:#000;
+  font-weight:600;
+}
+.btn-primary:hover{
+  background:#1de8ff;
+  border-color:#1de8ff;
+  box-shadow:0 0 24px var(--cyan-g);
+  transform:translateY(-2px);
+  color:#000;
+}
+.btn-ghost-terra{
+  border-color:var(--terra-l);
+  color:var(--terra);
+}
+.btn-ghost-terra:hover{
+  background:var(--terra-g);
+  border-color:var(--terra);
+  box-shadow:0 0 16px var(--terra-g);
+}
+
+/* ═══════════════════════════════════════
+   TAGS & BADGES
+═══════════════════════════════════════ */
+.tag{
+  font-family:var(--FM);
+  font-size:.68rem;
+  padding:.32rem .8rem;
+  border:1px solid var(--border-md);
+  border-radius:100px;
+  color:var(--text-dim);
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  transition:all .2s;
+  display:inline-block;
+}
+.tag:hover{border-color:var(--terra);color:var(--terra);}
+.tag-cyan{border-color:var(--cyan-g);color:var(--cyan);}
+.tag-terra{border-color:var(--terra-l);color:var(--terra);}
+.tag-moss{border-color:var(--moss-g);color:var(--moss);}
+
+.sys-badge{
+  font-family:var(--FM);
+  font-size:.72rem;
+  padding:.28rem .9rem;
+  border:1px solid var(--moss-g);
+  border-radius:20px;
+  color:var(--moss);
+  background:var(--moss-g);
+  display:inline-flex;align-items:center;gap:.45rem;
+  letter-spacing:.06em;
+}
+.sys-badge::before{
+  content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--moss);
+  box-shadow:0 0 7px var(--moss);
+  animation:glow-pulse 2s infinite;
+}
+
+.cert-badge{
+  font-family:var(--FM);
+  font-size:.7rem;
+  padding:.4rem 1rem;
+  border:1px solid var(--cyan-g);
+  color:var(--cyan);
+  background:var(--cyan-b);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  display:inline-block;
+}
+
+/* ═══════════════════════════════════════
+   REVEAL ANIMATION
+═══════════════════════════════════════ */
+.reveal{
+  opacity:0;
+  transform:translateY(22px);
+  transition:opacity .9s cubic-bezier(.2,.8,.3,1),transform .9s cubic-bezier(.2,.8,.3,1);
+}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+#home{
+  min-height:100vh;
+  padding-top:calc(var(--nav-h) + 4rem);
+  padding-bottom:5rem;
+  padding-left:var(--pad);
+  padding-right:var(--pad);
+  max-width:var(--max);
+  margin:0 auto;
+}
+.hero-inner{
+  display:grid;
+  grid-template-columns:1.15fr 1fr;
+  gap:3.5rem;
+  align-items:start;
+}
+@media(max-width:1100px){.hero-inner{grid-template-columns:1fr .9fr;gap:2.5rem;}}
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr;gap:2rem;}}
+
+.hero-meta{
+  display:flex;flex-wrap:wrap;gap:1.4rem;
+  font-family:var(--FM);font-size:.72rem;color:var(--text-mute);
+  margin-bottom:2.2rem;letter-spacing:.05em;
+}
+.hero-meta b{color:var(--text-dim);font-weight:500;}
+
+.hero-h1{
+  font-family:var(--FD);
+  font-size:clamp(3.2rem,9vw,7.2rem);
+  font-weight:700;
+  line-height:.9;
+  letter-spacing:-.04em;
+  margin-bottom:1rem;
+}
+.hero-h1 .name-first{display:block;}
+.hero-h1 .name-last{
+  font-family:var(--FB);
+  font-style:italic;
+  font-weight:400;
+  color:var(--terra);
+  display:block;
+}
+
+.hero-role{
+  font-family:var(--FB);
+  font-size:clamp(1rem,1.8vw,1.25rem);
+  font-weight:400;
+  color:var(--text-dim);
+  max-width:540px;
+  margin-bottom:1.8rem;
+  line-height:1.65;
+}
+.hero-role strong{color:var(--text);font-style:italic;font-weight:500;}
+
+.hero-tags{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:2.2rem;}
+.hero-btns{display:flex;flex-wrap:wrap;gap:.8rem;margin-bottom:2.5rem;}
+
+.hero-stat-row{
+  display:flex;flex-wrap:wrap;gap:1.2rem 2rem;
+  padding-top:1.8rem;
+  margin-top:1.8rem;
+  border-top:1px solid var(--border);
+}
+.hero-stat{display:flex;flex-direction:column;gap:.2rem;}
+.hero-stat-num{
+  font-family:var(--FD);
+  font-size:1.7rem;
+  font-weight:700;
+  color:var(--terra);
+  letter-spacing:-.02em;
+  line-height:1;
+}
+.hero-stat-lbl{
+  font-family:var(--FM);
+  font-size:.66rem;
+  color:var(--text-mute);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+/* Hero Map */
+.hero-map-wrap{
+  position:relative;
+  border:1px solid var(--border-md);
+  border-radius:3px;
+  overflow:hidden;
+  background:#070c0f;
+  box-shadow:0 0 32px var(--cyan-g),0 0 0 1px rgba(0,204,240,.06);
+}
+.hero-map-wrap .scan-line{
+  position:absolute;top:0;left:0;width:100%;height:2px;
+  background:var(--cyan);
+  box-shadow:0 0 10px var(--cyan),0 0 22px var(--cyan-g);
+  animation:scan-anim 4.5s linear infinite;
+  opacity:.65;z-index:50;pointer-events:none;
+}
+@keyframes scan-anim{0%{top:-2px;}50%{top:100%;}100%{top:-2px;}}
+.hero-map-wrap .map-label{
+  position:absolute;bottom:0;left:0;right:0;
+  z-index:500;pointer-events:none;
+  font-family:var(--FM);font-size:.62rem;color:var(--cyan);
+  letter-spacing:.14em;text-align:center;
+  padding:.45rem .8rem;
+  background:rgba(9,13,15,.78);
+}
+#perth-map{width:100%;height:420px;}
+@media(max-width:900px){#perth-map{height:260px;}}
+
+/* ═══════════════════════════════════════
+   ABOUT
+═══════════════════════════════════════ */
+.about-grid{
+  display:grid;
+  grid-template-columns:1.2fr 1fr;
+  gap:3.5rem;
+  margin-top:2.5rem;
+  align-items:start;
+}
+@media(max-width:880px){.about-grid{grid-template-columns:1fr;gap:2.5rem;}}
+
+.about-lead{
+  font-family:var(--FB);
+  font-size:1.25rem;
+  font-weight:400;
+  line-height:1.55;
+  margin-bottom:1.4rem;
+}
+.about-lead strong{
+  font-style:italic;
+  font-weight:500;
+  color:var(--terra);
+}
+.about-body p{
+  color:var(--text-dim);
+  font-size:1rem;
+  margin-bottom:.9rem;
+}
+.about-body p b{color:var(--text);font-style:normal;}
+
+.creds{
+  display:flex;flex-direction:column;gap:.55rem;
+  margin-top:.5rem;
+}
+.cred{
+  display:flex;gap:1rem;
+  padding:.85rem 1rem;
+  background:var(--bg-elev);
+  border:1px solid var(--border);
+  border-left:2px solid var(--cyan);
+  font-family:var(--FM);
+  font-size:.78rem;
+  transition:border-left-color .2s;
+}
+.cred:hover{border-left-color:var(--terra);}
+.cred b{color:var(--cyan);min-width:86px;font-weight:500;flex-shrink:0;}
+.cred:hover b{color:var(--terra);}
+.cred span{color:var(--text-dim);}
+
+/* ═══════════════════════════════════════
+   CAPABILITIES GRID
+═══════════════════════════════════════ */
+.caps-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:1.2rem;
+  margin-top:3rem;
+}
+.cap-card{
+  padding:1.6rem;
+  background:var(--bg-elev);
+  border:1px solid var(--border);
+  position:relative;
+  overflow:hidden;
+  transition:all .32s cubic-bezier(.2,.8,.3,1);
+}
+.cap-card::before{
+  content:'';
+  position:absolute;top:0;left:0;
+  width:32px;height:1px;
+  background:var(--cyan);
+  transition:width .4s;
+}
+.cap-card:hover{
+  transform:translateY(-4px);
+  border-color:var(--border-md);
+  background:var(--surface);
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.cap-card:hover::before{width:100%;}
+.cap-icon{
+  width:26px;height:26px;
+  color:var(--terra);
+  margin-bottom:.9rem;
+}
+.cap-card h4{
+  font-family:var(--FD);
+  font-size:1rem;
+  font-weight:600;
+  margin-bottom:.65rem;
+  letter-spacing:-.01em;
+}
+.cap-list{
+  list-style:none;
+  display:flex;flex-direction:column;gap:.32rem;
+}
+.cap-list li{
+  font-family:var(--FM);
+  font-size:.75rem;
+  color:var(--text-dim);
+  padding-left:.85rem;
+  position:relative;
+}
+.cap-list li::before{content:'—';position:absolute;left:0;color:var(--terra);}
+
+/* ═══════════════════════════════════════
+   JOURNEY
+═══════════════════════════════════════ */
+.journey-layout{
+  display:grid;
+  grid-template-columns:1fr 1.6fr;
+  gap:3rem;
+  margin-top:3rem;
+  align-items:start;
+}
+@media(max-width:980px){.journey-layout{grid-template-columns:1fr;}}
+
+.journey-stop{
+  display:grid;
+  grid-template-columns:60px 1fr;
+  gap:1.2rem;
+  padding:1.5rem 0;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  transition:all .22s;
+}
+.journey-stop:first-child{padding-top:.25rem;}
+.journey-stop:last-child{border-bottom:none;}
+.journey-stop:hover .j-dot{background:var(--cyan);box-shadow:0 0 0 5px var(--cyan-b);}
+.journey-stop.active .j-dot{background:var(--cyan);box-shadow:0 0 0 5px var(--cyan-b),0 0 14px var(--cyan-g);}
+
+.j-yr{
+  font-family:var(--FM);
+  font-size:.68rem;
+  color:var(--text-mute);
+  letter-spacing:.03em;
+  line-height:1.4;
+  text-align:right;
+  padding-top:.3rem;
+}
+.j-dot-col{display:flex;align-items:flex-start;gap:.9rem;}
+.j-dot{
+  width:11px;height:11px;
+  border-radius:50%;
+  background:var(--text-mute);
+  flex-shrink:0;
+  margin-top:.38rem;
+  transition:all .28s;
+}
+.j-dot.current{
+  background:var(--moss);
+  box-shadow:0 0 0 4px var(--moss-g),0 0 16px rgba(138,170,98,.4);
+  animation:glow-pulse 2.2s infinite;
+}
+.j-inner h3{
+  font-family:var(--FD);
+  font-size:1.08rem;
+  font-weight:600;
+  letter-spacing:-.01em;
+  margin-bottom:.2rem;
+}
+.j-loc{
+  font-family:var(--FM);
+  font-size:.68rem;
+  color:var(--terra);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  margin-bottom:.5rem;
+}
+.j-inner p{
+  color:var(--text-dim);
+  font-size:.9rem;
+  line-height:1.6;
+}
+
+/* Journey Map */
+.journey-map-wrap{
+  border:1px solid var(--border-md);
+  border-radius:3px;
+  overflow:hidden;
+  background:#070c0f;
+  position:relative;
+}
+.journey-map-wrap::after{
+  content:'';
+  position:absolute;inset:0;pointer-events:none;z-index:400;
+  box-shadow:inset 0 0 50px rgba(9,13,15,.5);
+}
+.journey-hint{
+  position:absolute;bottom:.6rem;right:.8rem;
+  z-index:500;
+  font-family:var(--FM);font-size:.6rem;color:var(--text-mute);
+  letter-spacing:.1em;background:rgba(9,13,15,.8);padding:.3rem .6rem;
+}
+#journey-map{width:100%;height:520px;}
+@media(max-width:980px){#journey-map{height:380px;}}
+
+/* Leaflet custom overrides */
+.lf-marker{background:transparent!important;border:none!important;}
+.lf-dot{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--terra,#c97f3e);
+  border:2px solid rgba(201,127,62,.45);
+  box-shadow:0 0 0 4px rgba(201,127,62,.12);
+  cursor:pointer;
+  transition:all .28s;
+}
+.lf-dot:hover{box-shadow:0 0 0 6px rgba(201,127,62,.22),0 0 16px rgba(201,127,62,.4);}
+.lf-dot.current{
+  background:#8aaa62;
+  border-color:rgba(138,170,98,.5);
+  box-shadow:0 0 0 5px rgba(138,170,98,.2),0 0 18px rgba(138,170,98,.4);
+}
+.leaflet-popup-content-wrapper{
+  background:#111519!important;
+  border:1px solid rgba(220,215,206,.14)!important;
+  border-radius:2px!important;
+  box-shadow:0 8px 32px rgba(0,0,0,.7)!important;
+}
+.leaflet-popup-tip{background:#111519!important;}
+.leaflet-popup-content{
+  color:#dcd7ce;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.76rem;
+  line-height:1.65;
+  margin:.6rem .8rem!important;
+}
+.leaflet-popup-content b{color:#c97f3e;display:block;margin-bottom:.2rem;}
+.leaflet-popup-content em{color:#9fa49c;font-style:normal;}
+.leaflet-control-zoom{border:1px solid rgba(220,215,206,.12)!important;border-radius:2px!important;}
+.leaflet-control-zoom a{background:#111519!important;color:#dcd7ce!important;border-bottom:1px solid rgba(220,215,206,.1)!important;}
+.leaflet-control-zoom a:hover{color:#c97f3e!important;}
+.leaflet-attribution-flag{display:none!important;}
+
+/* ═══════════════════════════════════════
+   PROJECTS
+═══════════════════════════════════════ */
+/* FILTER BAR */
+.proj-filters{
+  display:flex;flex-wrap:wrap;gap:.5rem;
+  margin-bottom:2.5rem;
+}
+.proj-filter{
+  font-family:var(--FM);
+  font-size:.7rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:.4rem 1rem;
+  border:1px solid var(--border-md);
+  border-radius:2px;
+  color:var(--text-mute);
+  cursor:pointer;
+  transition:all .22s;
+  background:transparent;
+}
+.proj-filter:hover{border-color:var(--terra);color:var(--terra);}
+.proj-filter.active{
+  background:var(--cyan);
+  border-color:var(--cyan);
+  color:#000;
+  font-weight:600;
+}
+
+/* FEATURED */
+.proj-featured{
+  background:var(--bg-elev);
+  border:1px solid var(--border);
+  margin-bottom:3.5rem;
+  position:relative;overflow:hidden;
+  transition:border-color .3s;
+}
+.proj-featured:hover{border-color:var(--border-md);}
+.feat-banner{
+  background:linear-gradient(90deg,var(--terra),var(--terra) 60%,rgba(201,127,62,.6));
+  color:#0a0c0f;
+  padding:.48rem 1.2rem;
+  font-family:var(--FM);
+  font-size:.66rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  font-weight:600;
+  display:flex;justify-content:space-between;
+  align-items:center;
+}
+.feat-banner span:last-child{opacity:.65;font-size:.62rem;}
+.feat-body{
+  display:grid;
+  grid-template-columns:1.1fr 1fr;
+}
+@media(max-width:920px){.feat-body{grid-template-columns:1fr;}}
+.feat-content{padding:2.4rem 3rem;}
+@media(max-width:720px){.feat-content{padding:1.8rem;}}
+.feat-content h3{
+  font-family:var(--FD);
+  font-size:clamp(1.8rem,3vw,2.5rem);
+  font-weight:700;
+  line-height:1.05;
+  letter-spacing:-.025em;
+  margin-bottom:.5rem;
+}
+.feat-content h3 em{
+  font-family:var(--FB);
+  font-weight:400;
+  font-style:italic;
+  color:var(--terra);
+  display:block;
+}
+.feat-tags{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0 1.3rem;}
+.feat-content>p{color:var(--text-dim);margin-bottom:.9rem;font-size:.97rem;}
+.feat-list{
+  list-style:none;margin:1.3rem 0 2rem;
+  display:flex;flex-direction:column;gap:.5rem;
+}
+.feat-list li{
+  font-family:var(--FM);font-size:.78rem;
+  color:var(--text);padding-left:1.4rem;
+  position:relative;line-height:1.5;
+}
+.feat-list li::before{content:'▸';position:absolute;left:0;color:var(--terra);}
+.feat-btns{display:flex;gap:.7rem;flex-wrap:wrap;}
+.feat-visual{
+  position:relative;min-height:380px;
+  background:#070c0f;
+  border-left:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+/* Video variant */
+.feat-visual-video{
+  padding:0;
+  background:#000;
+  align-items:stretch;
+  justify-content:stretch;
+}
+/* YouTube facade (thumbnail + play overlay) */
+.yt-facade{
+  position:absolute;
+  inset:0;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  transition:opacity .3s;
+}
+.yt-facade:hover .yt-play-btn svg path:first-child{fill:#cc0000;}
+.yt-thumb-wrap{
+  position:absolute;
+  inset:0;
+}
+.yt-thumb{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  filter:brightness(.75);
+  transition:filter .3s;
+}
+.yt-facade:hover .yt-thumb{filter:brightness(.9);}
+.yt-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 50%);
+}
+.yt-play-btn{
+  position:relative;
+  z-index:2;
+  filter:drop-shadow(0 4px 16px rgba(0,0,0,.6));
+  transition:transform .25s;
+}
+.yt-facade:hover .yt-play-btn{transform:scale(1.1);}
+.yt-label{
+  position:absolute;
+  bottom:1rem;
+  left:1rem;
+  right:1rem;
+  z-index:2;
+  font-family:var(--FM);
+  font-size:.72rem;
+  color:rgba(255,255,255,.85);
+  letter-spacing:.06em;
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+}
+.yt-badge{
+  background:rgba(255,0,0,.85);
+  color:#fff;
+  padding:.2rem .5rem;
+  font-size:.62rem;
+  letter-spacing:.1em;
+  border-radius:2px;
+  font-weight:600;
+  white-space:nowrap;
+}
+/* Actual iframe player */
+.yt-player{
+  position:absolute;
+  inset:0;
+}
+@media(max-width:920px){.feat-visual{border-left:none;border-top:1px solid var(--border);min-height:260px;}}
+.feat-visual::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(201,127,62,.05) 28px,rgba(201,127,62,.05) 29px),
+    repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(201,127,62,.05) 28px,rgba(201,127,62,.05) 29px),
+    radial-gradient(ellipse at center,rgba(201,127,62,.12),transparent 60%);
+}
+.play-wrap{position:relative;z-index:2;text-align:center;color:var(--text-dim);}
+.play-ring{
+  width:72px;height:72px;border:2px solid var(--terra);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 1rem;cursor:pointer;
+  transition:all .3s;
+  background:rgba(201,127,62,.1);
+}
+.play-ring:hover{background:var(--terra);transform:scale(1.08);}
+.play-ring:hover svg{fill:#000;}
+.play-ring svg{width:26px;height:26px;fill:var(--terra);margin-left:4px;transition:fill .3s;}
+.play-wrap p{font-family:var(--FM);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.5rem;}
+.play-wrap .storymap-link{
+  display:inline-block;margin-top:.8rem;
+  font-family:var(--FM);font-size:.68rem;
+  color:var(--cyan);letter-spacing:.08em;
+  border-bottom:1px solid var(--cyan-g);
+  padding-bottom:2px;
+  transition:color .2s;
+}
+.play-wrap .storymap-link:hover{color:var(--terra);}
+
+/* PROJECTS GRID */
+.proj-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:1.3rem;
+}
+@media(max-width:820px){.proj-grid{grid-template-columns:1fr;}}
+
+.proj-card{
+  background:var(--bg-elev);
+  border:1px solid var(--border);
+  padding:1.8rem;
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+  transition:all .32s cubic-bezier(.2,.8,.3,1), grid-column .01s;
+  cursor:pointer;
+}
+.proj-card::after{
+  content:'';position:absolute;bottom:0;left:0;
+  height:2px;width:0;
+  background:linear-gradient(90deg,var(--terra),var(--cyan));
+  transition:width .4s;
+}
+.proj-card:hover{
+  transform:translateY(-3px);
+  border-color:var(--border-md);
+  background:var(--surface);
+}
+.proj-card:hover::after{width:100%;}
+.proj-card.expanded{
+  border-color:var(--terra-l);
+}
+.proj-card.expanded::after{width:100%;}
+
+.proj-chevron{
+  position:absolute;top:1rem;right:1rem;
+  font-family:var(--FM);font-size:.62rem;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-mute);
+  display:flex;align-items:center;gap:.3rem;
+  transition:color .25s;
+  pointer-events:none;
+}
+.proj-chevron svg{width:10px;height:10px;transition:transform .32s;fill:currentColor;}
+.proj-card.expanded .proj-chevron{color:var(--cyan);}
+.proj-card.expanded .proj-chevron svg{transform:rotate(90deg);}
+
+.proj-meta-row{
+  display:flex;justify-content:space-between;
+  font-family:var(--FM);font-size:.68rem;
+  color:var(--text-mute);letter-spacing:.05em;
+  margin-bottom:.75rem;
+}
+.proj-type{color:var(--terra);text-transform:uppercase;letter-spacing:.12em;}
+.proj-card h4{
+  font-family:var(--FD);
+  font-size:1.28rem;
+  font-weight:600;
+  line-height:1.15;
+  letter-spacing:-.01em;
+  margin-bottom:.35rem;
+}
+.proj-client{
+  font-family:var(--FM);font-size:.73rem;
+  color:var(--text-dim);
+  margin-bottom:.75rem;
+}
+.proj-card>p{
+  color:var(--text-dim);font-size:.92rem;
+  margin-bottom:1rem;flex-grow:1;
+}
+.proj-workflow{
+  font-family:var(--FM);font-size:.66rem;
+  color:var(--text-mute);
+  padding:.7rem .9rem;
+  background:rgba(0,0,0,.25);
+  border-left:2px solid var(--terra);
+  margin-bottom:.9rem;
+  line-height:1.8;
+}
+.proj-workflow b{
+  color:var(--terra);font-weight:500;
+  display:block;margin-bottom:.2rem;letter-spacing:.1em;
+}
+.proj-tech-row{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:auto;}
+.tech-pill{
+  font-family:var(--FM);font-size:.64rem;
+  padding:.2rem .52rem;
+  color:var(--text-dim);
+  border:1px solid var(--border);
+  background:rgba(0,0,0,.2);
+}
+
+/* EXPANDABLE PANEL */
+.proj-panel-wrap{
+  max-height:0;overflow:hidden;
+  transition:max-height .58s cubic-bezier(.2,.8,.3,1);
+}
+.proj-panel{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:1.8rem;
+  padding:1.5rem 0 .5rem;
+  border-top:1px solid var(--border);
+  margin-top:1.2rem;
+}
+@media(max-width:640px){.proj-panel{grid-template-columns:1fr;}}
+.panel-section-title{
+  font-family:var(--FM);font-size:.68rem;
+  color:var(--terra);letter-spacing:.15em;
+  text-transform:uppercase;margin-bottom:.7rem;
+}
+.panel-list{list-style:none;display:flex;flex-direction:column;gap:.45rem;}
+.panel-list li{
+  font-family:var(--FM);font-size:.77rem;
+  color:var(--text-dim);
+  padding-left:1.3rem;position:relative;line-height:1.5;
+}
+.panel-list li::before{content:'▸';position:absolute;left:0;color:var(--terra);}
+.panel-note{
+  color:var(--text-dim);font-size:.88rem;
+  font-style:italic;margin-top:.9rem;
+  font-family:var(--FB);
+}
+.proj-map-slot{
+  background:#070c0f;
+  border:1px solid var(--border);
+  border-radius:2px;
+  overflow:hidden;
+  position:relative;
+  height:200px;
+}
+.proj-map-slot .slot-lbl{
+  position:absolute;bottom:0;left:0;right:0;z-index:500;pointer-events:none;
+  font-family:var(--FM);font-size:.58rem;
+  color:var(--terra);letter-spacing:.15em;
+  text-align:center;padding:.38rem;
+  background:rgba(9,13,15,.75);
+}
+.slot-add-hint{
+  margin-top:.5rem;
+  font-family:var(--FM);font-size:.65rem;
+  color:var(--text-mute);letter-spacing:.06em;
+  text-align:center;
+  font-style:italic;
+}
+/* Image gallery zone */
+.img-gallery{
+  grid-column:1/-1;
+  margin-top:1.2rem;
+  padding-top:1.2rem;
+  border-top:1px solid var(--border);
+}
+.img-gallery-label{
+  font-family:var(--FM);font-size:.66rem;
+  color:var(--terra);letter-spacing:.15em;
+  text-transform:uppercase;margin-bottom:.8rem;
+}
+.img-gallery-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:.8rem;
+}
+.img-slot{
+  aspect-ratio:16/10;
+  background:rgba(0,0,0,.35);
+  border:1px dashed var(--border-md);
+  border-radius:2px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:.4rem;
+  cursor:pointer;
+  transition:all .22s;
+  position:relative;
+  overflow:hidden;
+}
+.img-slot:hover{border-color:var(--terra);background:var(--terra-g);}
+.img-slot svg{width:20px;height:20px;color:var(--text-mute);}
+.img-slot span{font-family:var(--FM);font-size:.6rem;color:var(--text-mute);letter-spacing:.08em;text-align:center;}
+.img-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.img-slot img.preview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.img-slot .rm-btn{
+  position:absolute;top:.3rem;right:.3rem;
+  background:rgba(0,0,0,.7);border:none;
+  color:var(--text);font-size:.65rem;font-family:var(--FM);
+  padding:.2rem .4rem;cursor:pointer;border-radius:1px;
+  opacity:0;transition:opacity .2s;
+}
+.img-slot:hover .rm-btn{opacity:1;}
+
+/* WIDE card (research) */
+.proj-card.wide{
+  grid-column:1/-1;
+  display:block;
+}
+.proj-card.wide .proj-panel{
+  grid-template-columns:1fr 1fr 1fr;
+}
+@media(max-width:820px){
+  .proj-card.wide{grid-column:1;}
+  .proj-card.wide .proj-panel{grid-template-columns:1fr;}
+}
+
+/* ═══════════════════════════════════════
+   CREDENTIALS
+═══════════════════════════════════════ */
+.cred-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:1.2rem;
+  margin-top:2.5rem;
+}
+.cred-card{
+  padding:1.5rem;
+  background:var(--bg-elev);
+  border:1px solid var(--border);
+  border-top:2px solid var(--cyan);
+  transition:all .3s;
+}
+.cred-card:hover{
+  border-top-color:var(--terra);
+  transform:translateY(-3px);
+}
+.cred-card-icon{
+  font-family:var(--FM);
+  font-size:.64rem;color:var(--cyan);
+  letter-spacing:.15em;text-transform:uppercase;
+  margin-bottom:.8rem;
+  display:flex;align-items:center;gap:.5rem;
+}
+.cred-card-icon::before{content:'';width:16px;height:1px;background:var(--cyan);}
+.cred-card h4{
+  font-family:var(--FD);font-size:1rem;
+  font-weight:600;margin-bottom:.35rem;
+  letter-spacing:-.01em;
+}
+.cred-card p{
+  font-family:var(--FM);font-size:.78rem;
+  color:var(--text-dim);line-height:1.55;
+}
+
+/* ═══════════════════════════════════════
+   CONTACT
+═══════════════════════════════════════ */
+#contact{
+  padding-top:5rem;padding-bottom:6rem;
+  border-top:1px solid var(--border);
+  margin-top:2rem;
+}
+.contact-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4rem;
+  align-items:start;
+  margin-top:2.5rem;
+}
+@media(max-width:820px){.contact-grid{grid-template-columns:1fr;gap:2.5rem;}}
+
+#contact h2{
+  font-family:var(--FD);
+  font-size:clamp(2.2rem,5.5vw,4rem);
+  font-weight:700;
+  line-height:.95;
+  letter-spacing:-.03em;
+  margin-bottom:1.4rem;
+}
+#contact h2 em{
+  font-family:var(--FB);
+  font-style:italic;
+  font-weight:400;
+  color:var(--terra);
+}
+#contact>.section-full>p,
+.contact-lede{
+  color:var(--text-dim);
+  max-width:500px;
+  margin-bottom:2rem;
+  font-size:1rem;
+}
+
+/* Contact form */
+.contact-form{
+  display:flex;flex-direction:column;
+  gap:1rem;
+}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+@media(max-width:580px){.form-row{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:.4rem;}
+.form-label{
+  font-family:var(--FM);font-size:.68rem;
+  color:var(--text-mute);letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.form-group input,
+.form-group textarea,
+.form-group select{
+  font-family:var(--FM);font-size:.85rem;
+  background:var(--bg-elev);
+  border:1px solid var(--border-md);
+  color:var(--text);
+  padding:.75rem 1rem;
+  border-radius:2px;
+  transition:border-color .2s,box-shadow .2s;
+  outline:none;
+  width:100%;
+  -webkit-appearance:none;
+}
+.form-group input:focus,
+.form-group textarea:focus{
+  border-color:var(--cyan);
+  box-shadow:0 0 0 3px var(--cyan-b);
+}
+.form-group textarea{
+  min-height:120px;
+  resize:vertical;
+  line-height:1.6;
+}
+.form-status{
+  font-family:var(--FM);font-size:.78rem;
+  padding:.7rem 1rem;
+  border-radius:2px;
+  display:none;
+}
+.form-status.success{
+  background:var(--moss-g);
+  color:var(--moss);
+  border:1px solid rgba(138,170,98,.3);
+  display:block;
+}
+.form-status.error{
+  background:rgba(180,60,60,.12);
+  color:#e47a7a;
+  border:1px solid rgba(180,60,60,.3);
+  display:block;
+}
+
+/* Contact links */
+.contact-links{
+  display:flex;flex-direction:column;gap:.8rem;
+}
+.contact-link{
+  display:flex;flex-direction:column;gap:.22rem;
+  padding:.85rem 1.2rem;
+  border:1px solid var(--border-md);
+  transition:all .25s;
+}
+.contact-link:hover{
+  border-color:var(--terra);
+  background:var(--terra-g);
+  transform:translateX(-3px);
+}
+.cl-label{
+  font-family:var(--FM);font-size:.64rem;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text-mute);
+}
+.cl-value{
+  font-family:var(--FM);font-size:.9rem;
+  color:var(--text);
+}
+.storymap-cta{
+  display:block;
+  margin-top:1.5rem;
+  padding:1.2rem;
+  border:1px solid var(--border-md);
+  background:var(--bg-elev);
+  transition:all .25s;
+  text-decoration:none;
+  cursor:pointer;
+}
+.storymap-cta:hover{
+  border-color:var(--sky);
+  background:rgba(95,157,181,.08);
+}
+.storymap-cta .sc-label{
+  font-family:var(--FM);font-size:.62rem;
+  color:var(--sky);letter-spacing:.15em;text-transform:uppercase;
+  margin-bottom:.4rem;
+}
+.storymap-cta .sc-title{
+  font-family:var(--FD);font-size:.95rem;font-weight:600;
+  color:var(--text);margin-bottom:.3rem;
+}
+.storymap-cta .sc-sub{
+  font-family:var(--FM);font-size:.72rem;
+  color:var(--text-dim);
+}
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer{
+  padding:2rem var(--pad);
+  max-width:var(--max);margin:0 auto;
+  border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;
+  font-family:var(--FM);font-size:.68rem;
+  color:var(--text-mute);letter-spacing:.05em;
+  flex-wrap:wrap;gap:.8rem;
+}
+footer a:hover{color:var(--terra);}
+
+/* ═══════ TERRAFORGE ROADMAP ═══════ */
+.tf-roadmap{
+  margin-top:1.5rem;
+  padding-top:1.5rem;
+  border-top:1px solid var(--border);
+}
+.tf-roadmap-label{
+  font-family:var(--FM);
+  font-size:.68rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--text-mute);
+  display:flex;align-items:center;gap:.6rem;
+  margin-bottom:1rem;
+}
+/* Group labels */
+.tf-group-label{
+  font-family:var(--FM);
+  font-size:.66rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  display:flex;align-items:center;gap:.6rem;
+  margin-bottom:.75rem;
+  margin-top:.5rem;
+}
+.tf-group-active{color:var(--terra);}
+.tf-group-planned{color:var(--sky);}
+.tf-dot-planned{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--sky);
+  box-shadow:0 0 6px var(--sky);
+  flex-shrink:0;
+}
+/* Dev modules: terra-tinted border */
+.tf-module-dev{
+  border-left-color:rgba(201,127,62,.4)!important;
+  background:rgba(201,127,62,.03);
+}
+.tf-module-dev:hover{border-left-color:var(--terra)!important;}
+/* Planned modules: sky-tinted border, slightly muted */
+.tf-module-plan{
+  border-left-color:rgba(95,157,181,.25)!important;
+  opacity:.82;
+}
+.tf-module-plan:hover{
+  border-left-color:var(--sky)!important;
+  opacity:1;
+}
+.tf-module-plan .tf-mod-name{color:var(--text-dim);}
+.tf-modules-planned{gap:.6rem;}
+.tf-dot-anim{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--terra);
+  box-shadow:0 0 8px var(--terra);
+  flex-shrink:0;
+  animation:glow-pulse 1.8s ease-in-out infinite;
+}
+.tf-modules{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.75rem;
+}
+@media(max-width:1200px){.tf-modules{grid-template-columns:1fr;}}
+.tf-module{
+  display:flex;align-items:flex-start;gap:.8rem;
+  padding:.8rem 1rem;
+  background:rgba(0,0,0,.25);
+  border:1px solid var(--border);
+  border-left:2px solid var(--terra-g);
+  transition:border-left-color .2s;
+}
+.tf-module:hover{border-left-color:var(--terra);}
+.tf-mod-icon{
+  flex-shrink:0;
+  width:28px;height:28px;
+  color:var(--terra);
+  margin-top:.1rem;
+}
+.tf-mod-icon svg{width:100%;height:100%;}
+.tf-mod-name{
+  font-family:var(--FD);
+  font-size:.88rem;
+  font-weight:600;
+  margin-bottom:.25rem;
+  letter-spacing:-.01em;
+}
+.tf-mod-desc{
+  font-family:var(--FB);
+  font-size:.82rem;
+  color:var(--text-dim);
+  line-height:1.5;
+  margin-bottom:.4rem;
+}
+.tf-mod-status{
+  font-family:var(--FM);
+  font-size:.62rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:.18rem .55rem;
+  border-radius:100px;
+}
+.tf-mod-status:contains('In Development'){
+  color:var(--terra);
+  border:1px solid var(--terra-l);
+  background:var(--terra-g);
+}
+.cursor-blink::after{
+  content:'_';color:var(--cyan);
+  animation:blink-caret 1.1s step-end infinite;
+  margin-left:1px;
+}
+@keyframes blink-caret{50%{opacity:0;}}
+
+/* ═══════ RESPONSIVE OVERRIDES ═══════ */
+@media(max-width:768px){
+  :root{--pad:1.2rem;}
+  .hero-h1{font-size:clamp(2.8rem,14vw,4.5rem);}
+  .hero-role{font-size:1rem;}
+  .hero-stat-row{gap:1rem 1.5rem;}
+  .hero-stat-num{font-size:1.4rem;}
+  .section-title{font-size:clamp(1.6rem,6vw,2.2rem);}
+  .about-grid{grid-template-columns:1fr;gap:1.8rem;}
+  .caps-grid{grid-template-columns:1fr 1fr;}
+  .journey-layout{grid-template-columns:1fr;}
+  .feat-body{grid-template-columns:1fr;}
+  .feat-visual{min-height:200px;}
+  .proj-grid{grid-template-columns:1fr;}
+  .contact-grid{grid-template-columns:1fr;}
+  .cred-grid{grid-template-columns:1fr 1fr;}
+  .ch-divider{padding:1rem var(--pad) 0;}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:clamp(2.4rem,13vw,3.5rem);}
+  .hero-tags{gap:.35rem;}
+  .tag{font-size:.64rem;padding:.28rem .65rem;}
+  .hero-btns{flex-direction:column;align-items:flex-start;}
+  .hero-btns .btn{width:100%;justify-content:center;}
+  .caps-grid{grid-template-columns:1fr;}
+  .cred-grid{grid-template-columns:1fr;}
+  .proj-panel{grid-template-columns:1fr!important;}
+  .feat-btns{flex-direction:column;}
+  .feat-btns .btn{width:100%;justify-content:center;}
+  .form-row{grid-template-columns:1fr;}
+  .hero-stat-row{gap:.8rem 1.5rem;}
+  .hero-stat-num{font-size:1.3rem;}
+}
+</style>
+
+</head>
+<body>
+
+<!-- ── BACKGROUND LAYERS ── -->
+<div class="bg-layers" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-topo"></div>
+  <div class="bg-vignette"></div>
+</div>
+
+<!-- ── NAV ── -->
+<nav id="nav" role="navigation" aria-label="Main navigation">
+  <div class="nav-logo">
+    <span class="nav-dot" aria-hidden="true"></span>
+    <span>
+      <span class="brand">Geo<b>Forge</b>Spatial</span>
+      <span style="color:var(--text-mute);margin:0 .35rem">by</span>
+      <span style="color:var(--text-dim);">JuanBarrera</span>
+    </span>
+  </div>
+  <nav class="nav-tabs" aria-label="Section navigation">
+    <button class="nav-tab active" data-target="home"       onclick="navTo('home')">Home</button>
+    <button class="nav-tab"        data-target="journey"    onclick="navTo('journey')">Journey</button>
+    <button class="nav-tab"        data-target="projects"   onclick="navTo('projects')">Projects</button>
+    <button class="nav-tab"        data-target="contact"    onclick="navTo('contact')">Contact</button>
+  </nav>
+  <a href="#contact" class="nav-cta-btn" onclick="navTo('contact');return false;">Get in Touch</a>
+</nav>
+
+<!-- ── DOT NAV ── -->
+<div class="dot-nav" role="navigation" aria-label="Page section dots">
+  <div class="dot-nav-item active" data-target="home"     onclick="navTo('home')">
+    <span class="dot-nav-label">Home</span>
+    <span class="dot-pip"></span>
+  </div>
+  <div class="dot-nav-item" data-target="journey"   onclick="navTo('journey')">
+    <span class="dot-nav-label">Journey</span>
+    <span class="dot-pip"></span>
+  </div>
+  <div class="dot-nav-item" data-target="skills"    onclick="navTo('skills')">
+    <span class="dot-nav-label">Stack</span>
+    <span class="dot-pip"></span>
+  </div>
+  <div class="dot-nav-item" data-target="projects"  onclick="navTo('projects')">
+    <span class="dot-nav-label">Projects</span>
+    <span class="dot-pip"></span>
+  </div>
+  <div class="dot-nav-item" data-target="contact"   onclick="navTo('contact')">
+    <span class="dot-nav-label">Contact</span>
+    <span class="dot-pip"></span>
+  </div>
+</div>
+
+<main>
+
+<!-- ══════════════════════════════════════
+     HERO SECTION
+══════════════════════════════════════ -->
+<section id="home" aria-label="Introduction">
+  <div class="hero-inner">
+  <div>
+  <div class="hero-meta reveal">
+    <span class="sys-badge">Available · Perth, WA</span>
+    <span><b>LAT</b>&nbsp;31.9523°S</span>
+    <span><b>LON</b>&nbsp;115.8613°E</span>
+    <span><b>UTC</b>&nbsp;+08:00 AWST</span>
+  </div>
+
+  <div class="hero-h1 reveal" aria-label="Juan Barrera">
+    <span class="name-first">Juan</span>
+    <span class="name-last">Barrera.</span>
+  </div>
+
+  <p class="hero-role reveal">
+    <strong>Geographic &amp; Environmental Engineer</strong> turning drone data, satellite imagery and terrain models into <strong>spatial intelligence for mining and environment</strong> across Western Australia.
+  </p>
+
+  <div class="hero-tags reveal">
+    <span class="tag tag-cyan">GeoAI</span>
+    <span class="tag">GIS · ArcGIS · QGIS</span>
+    <span class="tag">RPAS / Drone Mapping</span>
+    <span class="tag">Remote Sensing</span>
+    <span class="tag">Python · ArcPy</span>
+    <span class="tag">Mining Analytics</span>
+  </div>
+
+  <div class="hero-btns reveal">
+    <button class="btn btn-primary" onclick="navTo('projects')">
+      Explore Projects
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+    </button>
+    <button class="btn" onclick="navTo('contact')">Get in Touch</button>
+    <a href="https://storymaps.arcgis.com/stories/9469c123950841a4892f6bd3a9e7daa7" target="_blank" rel="noopener" class="btn btn-ghost-terra">
+      View StoryMap
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+    </a>
+  </div>
+
+  <div class="hero-stat-row reveal">
+    <div class="hero-stat">
+      <span class="hero-stat-num">80+</span>
+      <span class="hero-stat-lbl">Spatial Datasets</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">50+</span>
+      <span class="hero-stat-lbl">Map Deliverables</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">6</span>
+      <span class="hero-stat-lbl">Countries / Regions</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">RePL</span>
+      <span class="hero-stat-lbl">CASA Licensed</span>
+    </div>
+  </div>
+
+  </div><!-- /hero-left -->
+  <!-- HERO MAP (Perth) -->
+  <div class="hero-map-wrap reveal">
+    <div class="scan-line" aria-hidden="true"></div>
+    <div id="perth-map" role="img" aria-label="Interactive map showing Perth, Western Australia"></div>
+    <div class="map-label" aria-hidden="true">PERTH · WA · 31.95°S 115.86°E · CURRENT LOCATION</div>
+  </div><!-- /hero-map-wrap -->
+  </div><!-- /hero-inner -->
+</section>
+
+<!-- DIVIDER -->
+<div class="ch-divider reveal"><div class="ch-divider-meta">01 — About</div><div class="ch-divider-line"></div></div>
+
+<!-- ══════════════════════════════════════
+     ABOUT SECTION
+══════════════════════════════════════ -->
+<section class="section" id="about" aria-label="About Juan Barrera">
+  <div class="section-label reveal">About</div>
+  <h2 class="section-title reveal">
+    Bridging spatial engineering and <em>high-precision GeoAI</em> for the resource sector.
+  </h2>
+  <div class="about-grid">
+    <div>
+      <p class="about-lead reveal">
+        I'm a <strong>Geographic &amp; Environmental Engineer</strong> with a decade of experience across Colombia, Chile and Australia — specialised in GIS automation, drone mapping, environmental analysis and spatial product development.
+      </p>
+      <div class="about-body reveal">
+        <p>My professional background spans complex geodatabase management at scale — 80+ datasets, 5–10 GB of geospatial data, 50+ cartographic deliverables for environmental licensing in the oil and mining sectors — through to independent RPAS surveying and GeoAI product development in Western Australia.</p>
+        <p>Today I bridge the gap between traditional engineering workflows and <b>automated spatial intelligence</b>, designing Python pipelines and applying GeoAI to turn raw drone and satellite data into operational insights for mining and environmental clients.</p>
+        <p>Through <b>TerraForge Satellite Intelligence</b>, I build the kind of tools I always needed in the field: desktop analytics purpose-built for mining pit characterisation, stockpile measurement, and terrain change detection.</p>
+      </div>
+      <div class="hero-btns reveal" style="margin-top:1.5rem;">
+        <a href="https://www.linkedin.com/in/juanbarrerac" target="_blank" rel="noopener" class="btn btn-ghost-terra">
+          LinkedIn Profile
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <a href="https://github.com/juanbarrera07" target="_blank" rel="noopener" class="btn">
+          GitHub
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.82 1.31 3.51 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.94 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 016 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.93.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.82.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </a>
+      </div>
+    </div>
+    <div>
+      <div class="creds reveal">
+        <div class="cred"><b>DEGREE</b><span>Geographic &amp; Environmental Engineer — Colombia</span></div>
+        <div class="cred"><b>ASSESSED</b><span>Spatial Science Technician — SSSI Australia</span></div>
+        <div class="cred"><b>REPL</b><span>Remote Pilot Licence — CASA Australia</span></div>
+        <div class="cred"><b>EXCHANGE</b><span>Geosciences — Universidad de Concepción, Chile</span></div>
+        <div class="cred"><b>STATUS</b><span class="cursor-blink">Open to GIS / Mining / Environmental roles · Perth WA</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DIVIDER -->
+<div class="ch-divider reveal"><div class="ch-divider-meta">02 — Career Journey</div><div class="ch-divider-line"></div></div>
+
+<!-- ══════════════════════════════════════
+     JOURNEY SECTION
+══════════════════════════════════════ -->
+<section class="section" id="journey" aria-label="Career journey">
+  <div class="section-label reveal">02 / Journey</div>
+  <h2 class="section-title reveal">Six <em>geographic coordinates</em> that shaped this career.</h2>
+  <p class="section-lead reveal">A trajectory across South America and Australia — from enterprise geodatabases to RPAS surveying and GeoAI product development.</p>
+
+  <div class="journey-layout">
+    <div role="list" aria-label="Career timeline">
+      <div class="journey-stop reveal" onclick="flyToStop(0)" data-idx="0" role="listitem" tabindex="0" aria-label="Bogotá Colombia 2015 to 2020">
+        <div class="j-yr">2015<br>—<br>2020</div>
+        <div class="j-dot-col">
+          <div class="j-dot"></div>
+          <div class="j-inner">
+            <h3>Geographic &amp; Environmental Engineering</h3>
+            <div class="j-loc">Bogotá · Colombia</div>
+            <p>Completed undergraduate degree with strong foundation in GIS, cartography, environmental risk assessment and territorial analysis.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-stop reveal" onclick="flyToStop(1)" data-idx="1" role="listitem" tabindex="0">
+        <div class="j-yr">2019</div>
+        <div class="j-dot-col">
+          <div class="j-dot"></div>
+          <div class="j-inner">
+            <h3>International Academic Exchange</h3>
+            <div class="j-loc">Concepción · Chile</div>
+            <p>Geosciences and earth-environment studies at Universidad de Concepción, building international perspective on complex terrain analysis.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-stop reveal" onclick="flyToStop(2)" data-idx="2" role="listitem" tabindex="0">
+        <div class="j-yr">2020<br>— 2021</div>
+        <div class="j-dot-col">
+          <div class="j-dot"></div>
+          <div class="j-inner">
+            <h3>GIS Analyst — Energy Infrastructure</h3>
+            <div class="j-loc">Cali · Colombia · EMCALI</div>
+            <p>Enterprise geodatabase management for Cali's public energy utility — field data integration, attribute validation, GDB structuring.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-stop reveal" onclick="flyToStop(3)" data-idx="3" role="listitem" tabindex="0">
+        <div class="j-yr">2021<br>— 2022</div>
+        <div class="j-dot-col">
+          <div class="j-dot"></div>
+          <div class="j-inner">
+            <h3>Land Cover &amp; Satellite Mapping</h3>
+            <div class="j-loc">Casanare · Colombia · Eastern Plains</div>
+            <p>CORINE Land Cover mapping using RapidEye and Sentinel. Led QA/QC, classification, and cartographic consolidation for Optidron S.A.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-stop reveal" onclick="flyToStop(4)" data-idx="4" role="listitem" tabindex="0">
+        <div class="j-yr">2022<br>— 2024</div>
+        <div class="j-dot-col">
+          <div class="j-dot"></div>
+          <div class="j-inner">
+            <h3>Environmental GIS — Oil &amp; Mining</h3>
+            <div class="j-loc">Colombia · MCS Consulting S.A</div>
+            <p>80+ datasets, 50+ cartographic outputs for environmental licensing. ArcPy automation reducing manual processing across 5–10 GB GDBs.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="journey-stop reveal" onclick="flyToStop(5)" data-idx="5" role="listitem" tabindex="0">
+        <div class="j-yr">2025<br>→ NOW</div>
+        <div class="j-dot-col">
+          <div class="j-dot current"></div>
+          <div class="j-inner">
+            <h3>Geospatial Engineer · Perth, Australia</h3>
+            <div class="j-loc" style="color:var(--moss)">Perth · WA · Current Position</div>
+            <p>SSSI Skill Assessment + CASA RePL. Building TerraForge. Actively seeking GIS, drone survey and environmental roles in the WA resource sector.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOURNEY MAP -->
+    <div class="journey-map-wrap reveal" role="img" aria-label="Interactive map showing career locations from South America to Australia">
+      <div id="journey-map"></div>
+      <div class="journey-hint" aria-label="Ctrl + scroll to zoom">Ctrl + scroll to zoom</div>
+    </div>
+  </div>
+</section>
+
+<!-- DIVIDER -->
+<div class="ch-divider reveal"><div class="ch-divider-meta">03 — Technical Stack</div><div class="ch-divider-line"></div></div>
+
+<!-- ══════════════════════════════════════
+     CAPABILITIES SECTION
+══════════════════════════════════════ -->
+<section class="section" id="skills" aria-label="Technical capabilities">
+  <div class="section-label reveal">03 / Stack</div>
+  <h2 class="section-title reveal">The <em>toolkit</em>.</h2>
+  <div class="caps-grid">
+
+    <div class="cap-card reveal">
+      <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/><path d="M9 3v15M15 6v15"/></svg>
+      <h4>GIS &amp; Spatial Analysis</h4>
+      <ul class="cap-list"><li>ArcGIS Pro · ArcMap · QGIS</li><li>Enterprise geodatabases (GDB)</li><li>Cartographic production</li><li>Topology &amp; QA/QC</li></ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>
+      <h4>Drone Mapping · RPAS</h4>
+      <ul class="cap-list"><li>DJI · Litchi · flight planning</li><li>Agisoft Metashape · Pix4D</li><li>Orthomosaic · DSM · DTM</li><li>RePL / CASA certified</li></ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/></svg>
+      <h4>Remote Sensing</h4>
+      <ul class="cap-list"><li>Sentinel · Landsat · RapidEye</li><li>Supervised classification</li><li>NDVI · NDWI · spectral indices</li><li>CORINE Land Cover</li></ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 3l-4 9 4 9M16 3l4 9-4 9"/></svg>
+      <h4>Python &amp; Automation</h4>
+      <ul class="cap-list"><li>ArcPy · rasterio · geopandas</li><li>Streamlit desktop apps</li><li>ModelBuilder workflows</li><li>GeoAI product development</li></ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+      <h4>Data Management</h4>
+      <ul class="cap-list"><li>Geodatabases 5–10 GB scale</li><li>Attribute validation scripts</li><li>Multi-dataset integration</li><li>Data pipeline automation</li></ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <h4>Applied Domains</h4>
+      <ul class="cap-list"><li>Mining · open-pit analytics</li><li>Environmental monitoring</li><li>Terrain &amp; slope analysis</li><li>Environmental licensing</li></ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- DIVIDER -->
+<div class="ch-divider reveal"><div class="ch-divider-meta">04 — Projects</div><div class="ch-divider-line"></div></div>
+
+<!-- ══════════════════════════════════════
+     PROJECTS SECTION
+══════════════════════════════════════ -->
+<section class="section" id="projects" aria-label="Selected projects">
+  <div class="section-label reveal">04 / Projects</div>
+  <h2 class="section-title reveal">Selected <em>field work</em>.</h2>
+  <p class="section-lead reveal">From custom satellite intelligence software to open-pit drone surveys — projects where geospatial data meets real operational decisions. Click any project to expand.</p>
+
+  <!-- FILTER BAR -->
+  <div class="proj-filters reveal" role="group" aria-label="Filter projects by type">
+    <button class="proj-filter active" data-filter="all"           onclick="filterProjects('all',this)">All</button>
+    <button class="proj-filter"        data-filter="mining"        onclick="filterProjects('mining',this)">Mining</button>
+    <button class="proj-filter"        data-filter="environmental" onclick="filterProjects('environmental',this)">Environmental</button>
+    <button class="proj-filter"        data-filter="remote-sensing" onclick="filterProjects('remote-sensing',this)">Remote Sensing</button>
+    <button class="proj-filter"        data-filter="research"      onclick="filterProjects('research',this)">Research</button>
+  </div>
+
+  <!-- FEATURED: TERRAFORGE -->
+  <article class="proj-featured reveal" data-filter="mining geoai">
+    <div class="feat-banner">
+      <span>● FEATURED · GEOAI PRODUCT · WA · SATELLITE INTELLIGENCE</span>
+      <span>2026 · WESTERN AUSTRALIA · IN DEVELOPMENT</span>
+    </div>
+    <div class="feat-body">
+      <div class="feat-content">
+        <h3>TerraForge <em>Satellite Intelligence</em></h3>
+        <div class="feat-tags">
+          <span class="tag tag-terra">In Development</span>
+          <span class="tag tag-cyan">GeoAI</span>
+          <span class="tag">Mining Analytics</span>
+          <span class="tag">Perth, WA</span>
+        </div>
+        <p>A Streamlit desktop application for <strong>drone- and satellite-derived mining pit analytics</strong> — purpose-built to turn raw aerial data into decision-ready intelligence for Western Australian mining and environmental operations.</p>
+        <p>Designed from first-hand field experience: the kind of tool a GIS engineer actually needs on a mine site, not in a corporate dashboard.</p>
+        <ul class="feat-list">
+          <li>Stockpile volumetry from orthomosaics &amp; DSMs</li>
+          <li>Slope &amp; aspect analysis for pit wall stability</li>
+          <li>Multi-temporal change detection</li>
+          <li>Automated terrain analytics &amp; structured reporting</li>
+          <li>Built in Python · Streamlit · rasterio · geopandas · numpy</li>
+        </ul>
+        <div class="feat-btns">
+          <a href="https://github.com/juanbarrera07" target="_blank" rel="noopener" class="btn btn-primary">
+            View on GitHub
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.39.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.82 1.31 3.51 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.94 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 016 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.93.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.82.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          </a>
+          <button class="btn btn-ghost-terra" id="video-btn" onclick="loadYT();document.getElementById('yt-player').scrollIntoView({behavior:'smooth',block:'center'})">Watch Demo ▶</button>
+        </div>
+
+        <!-- WORKING ON: ML MODULES -->
+        <div class="tf-roadmap">
+
+          <!-- IN DEVELOPMENT GROUP -->
+          <div class="tf-group-label tf-group-active">
+            <span class="tf-dot-anim"></span>
+            IN DEVELOPMENT
+          </div>
+          <div class="tf-modules tf-modules-dev">
+            <div class="tf-module tf-module-dev">
+              <div class="tf-mod-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/></svg></div>
+              <div>
+                <div class="tf-mod-name">ML Stockpile Volumetry</div>
+                <div class="tf-mod-desc">Automated volume estimation from DSMs using machine learning regression — multi-temporal stockpile change tracking across mine sites</div>
+              </div>
+            </div>
+            <div class="tf-module tf-module-dev">
+              <div class="tf-mod-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3l-4 9 4 9M16 3l4 9-4 9"/></svg></div>
+              <div>
+                <div class="tf-mod-name">Automated Report Generator</div>
+                <div class="tf-mod-desc">Python pipeline exporting structured PDF reports with maps, metrics and charts — from raw data to deliverable in minutes</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PLANNED GROUP -->
+          <div class="tf-group-label tf-group-planned" style="margin-top:1.2rem;">
+            <span class="tf-dot-planned"></span>
+            PLANNED · NEXT PHASE
+          </div>
+          <div class="tf-modules tf-modules-planned">
+            <div class="tf-module tf-module-plan">
+              <div class="tf-mod-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20"/></svg></div>
+              <div>
+                <div class="tf-mod-name">Satellite Classification Engine</div>
+                <div class="tf-mod-desc">Multi-spectral ML classifier for land cover, lithology and vegetation — Sentinel-2 multitemporal analysis</div>
+              </div>
+            </div>
+            <div class="tf-module tf-module-plan">
+              <div class="tf-mod-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+              <div>
+                <div class="tf-mod-name">Multi-temporal Change Detection</div>
+                <div class="tf-mod-desc">Pixel-diff and object-based change detection across DSM time series — automated disturbance alerts for mine sites</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="feat-visual feat-visual-video" aria-label="TerraForge demo video">
+        <!-- YouTube embed — lazy loads on play click for performance -->
+        <div class="yt-facade" id="yt-facade" onclick="loadYT()" role="button" tabindex="0" aria-label="Play TerraForge demo video" onkeydown="if(event.key==='Enter')loadYT()">
+          <div class="yt-thumb-wrap">
+            <img
+              src="https://img.youtube.com/vi/7FNTS2apoOY/maxresdefault.jpg"
+              onerror="this.src='https://img.youtube.com/vi/7FNTS2apoOY/hqdefault.jpg'"
+              alt="TerraForge demo video thumbnail"
+              class="yt-thumb"
+              loading="lazy"
+            />
+            <div class="yt-overlay"></div>
+          </div>
+          <div class="yt-play-btn" aria-hidden="true">
+            <svg viewBox="0 0 68 48" width="68" height="48">
+              <path d="M66.5 7.7c-.8-2.9-3-5.2-5.8-6C55.8 0 34 0 34 0S12.2 0 7.3 1.6c-2.8.8-5 3.1-5.8 6C0 12.7 0 24 0 24s0 11.3 1.5 16.3c.8 2.9 3 5.2 5.8 6C12.2 48 34 48 34 48s21.8 0 26.7-1.6c2.8-.8 5-3.1 5.8-6C68 35.3 68 24 68 24s0-11.3-1.5-16.3z" fill="#ff0000"/>
+              <path d="M45 24L27 14v20" fill="#fff"/>
+            </svg>
+          </div>
+          <div class="yt-label">
+            <span class="yt-badge">▶ DEMO</span>
+            TerraForge Satellite Intelligence
+          </div>
+        </div>
+        <div class="yt-player" id="yt-player" style="display:none;">
+          <iframe
+            id="yt-iframe"
+            src=""
+            title="TerraForge Satellite Intelligence Demo"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            style="width:100%;height:100%;border:none;"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- PROJECT CARDS GRID -->
+  <div class="proj-grid" id="proj-grid">
+
+    <!-- 1: WA Open Pit -->
+    <article class="proj-card reveal" data-filter="mining" onclick="toggleProj(this,'wa-mine')" tabindex="0" aria-expanded="false" aria-label="Open Pit Mine project">
+      <div class="proj-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> EXPAND</div>
+      <div class="proj-meta-row"><span class="proj-type">Drone · Photogrammetry</span><span>Perth WA · 2025</span></div>
+      <h4>Open-Pit Mine · Drone Survey &amp; Terrain Model</h4>
+      <div class="proj-client">Independent RPAS Project · Western Australia</div>
+      <p>Drone-based mapping of an open-pit mining environment — high-resolution orthomosaics and Digital Surface Models for spatial analysis, site monitoring and terrain decision support.</p>
+      <div class="proj-workflow"><b>WORKFLOW</b>Flight Planning → RPAS Acquisition → Photogrammetry → Orthomosaic → DSM → Terrain Analysis</div>
+      <div class="proj-tech-row"><span class="tech-pill">DJI · Litchi</span><span class="tech-pill">Metashape</span><span class="tech-pill">ArcGIS Pro</span><span class="tech-pill">Hillshade · Slope</span></div>
+      <div class="proj-panel-wrap">
+        <div class="proj-panel" onclick="event.stopPropagation()">
+          <div>
+            <p class="panel-section-title">Outputs &amp; Results</p>
+            <ul class="panel-list">
+              <li>High-resolution orthomosaic of full pit extent</li>
+              <li>DSM for volumetric baseline and change reference</li>
+              <li>Hillshade, slope and aspect rasters for terrain interpretation</li>
+              <li>Flight path optimised for GSD consistency across pit walls</li>
+              <li>Full photogrammetry processing report (Metashape)</li>
+            </ul>
+            <p class="panel-note">Demonstrates full end-to-end drone surveying capability for WA mining operations — stockpile monitoring, wall inspection and change detection.</p>
+          </div>
+          <div>
+            <p class="panel-section-title">Location</p>
+            <div class="proj-map-slot">
+              <div id="map-wa-mine" style="width:100%;height:100%;"></div>
+              <div class="slot-lbl">PERTH · WA · 31.95°S 115.86°E</div>
+            </div>
+<p class="slot-add-hint">↑ Click markers to fly to location</p>
+          </div>
+        </div>
+        <!-- IMAGE GALLERY ZONE -->
+        <div class="img-gallery" onclick="event.stopPropagation()">
+          <p class="img-gallery-label">Visual Outputs · Open-Pit Orthomosaics · DSM · Hillshade · Slope</p>
+          <div class="img-gallery-grid" id="gallery-wa-mine">
+            <div class="img-slot" id="slot-wa-mine-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>ORTHOMOSAIC<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'wa-mine-1')">
+            </div>
+            <div class="img-slot" id="slot-wa-mine-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/></svg>
+              <span>DSM / TERRAIN<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'wa-mine-2')">
+            </div>
+            <div class="img-slot" id="slot-wa-mine-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20"/></svg>
+              <span>MAP OUTPUTS<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'wa-mine-3')">
+            </div>
+            <div class="img-slot" id="slot-wa-mine-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              <span>BEFORE / AFTER<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'wa-mine-4')">
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 2: MCS Environmental Licensing -->
+    <article class="proj-card reveal" data-filter="environmental mining" onclick="toggleProj(this,'mcs')" tabindex="0" aria-expanded="false">
+      <div class="proj-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> EXPAND</div>
+      <div class="proj-meta-row"><span class="proj-type">Environmental GIS</span><span>Colombia · 2022–2024</span></div>
+      <h4>Environmental Licensing &amp; GIS Automation</h4>
+      <div class="proj-client">MCS Consulting S.A · Oil &amp; Mining Sector</div>
+      <p>80+ geospatial datasets, 5–10 GB of GDB data, 50+ cartographic deliverables for environmental licensing in mining and energy sectors. ArcPy automation reduced manual validation time significantly.</p>
+      <div class="proj-workflow"><b>WORKFLOW</b>Field Data → GDB Cleaning → Spatial Analysis → ArcPy Automation → Cartographic Deliverables</div>
+      <div class="proj-tech-row"><span class="tech-pill">ArcGIS Pro</span><span class="tech-pill">ArcPy</span><span class="tech-pill">ModelBuilder</span><span class="tech-pill">Enterprise GDB</span></div>
+      <div class="proj-panel-wrap">
+        <div class="proj-panel" onclick="event.stopPropagation()">
+          <div>
+            <p class="panel-section-title">Scale &amp; Deliverables</p>
+            <ul class="panel-list">
+              <li>80+ datasets processed across multiple GDBs (5–10 GB)</li>
+              <li>50+ cartographic outputs for licensing packages</li>
+              <li>ArcPy scripts for automated attribute validation</li>
+              <li>Biodiversity compensation and infrastructure mapping</li>
+              <li>ModelBuilder workflows reducing processing time ~60%</li>
+            </ul>
+            <p class="panel-note">Projects spanned oil pipeline corridors, open-cast mining concessions and hydroelectric areas across multiple Colombian departments.</p>
+          </div>
+          <div>
+            <p class="panel-section-title">Project Area</p>
+            <div class="proj-map-slot">
+              <div id="map-mcs" style="width:100%;height:100%;"></div>
+              <div class="slot-lbl">COLOMBIA · 4.71°N 74.07°W</div>
+            </div>
+<p class="slot-add-hint">↑ Click markers to fly to location</p>
+          </div>
+        </div>
+        <!-- IMAGE GALLERY ZONE -->
+        <div class="img-gallery" onclick="event.stopPropagation()">
+          <p class="img-gallery-label">Visual Outputs · GDB Structure · Cartographic Outputs · ArcPy Workflows</p>
+          <div class="img-gallery-grid" id="gallery-mcs">
+            <div class="img-slot" id="slot-mcs-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>ORTHOMOSAIC<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'mcs-1')">
+            </div>
+            <div class="img-slot" id="slot-mcs-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/></svg>
+              <span>DSM / TERRAIN<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'mcs-2')">
+            </div>
+            <div class="img-slot" id="slot-mcs-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20"/></svg>
+              <span>MAP OUTPUTS<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'mcs-3')">
+            </div>
+            <div class="img-slot" id="slot-mcs-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              <span>BEFORE / AFTER<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'mcs-4')">
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 3: Land Cover -->
+    <article class="proj-card reveal" data-filter="remote-sensing environmental" onclick="toggleProj(this,'optidron')" tabindex="0" aria-expanded="false">
+      <div class="proj-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> EXPAND</div>
+      <div class="proj-meta-row"><span class="proj-type">Remote Sensing · Land Cover</span><span>Colombia · 2021–2022</span></div>
+      <h4>Land Cover Mapping · Satellite Imagery</h4>
+      <div class="proj-client">Optidron S.A · Eastern Plains, Colombia</div>
+      <p>CORINE Land Cover mapping using RapidEye (5-band multispectral, 5m) and Landsat imagery across the Colombian Eastern Plains. Supervised classification, topology correction and QA/QC.</p>
+      <div class="proj-workflow"><b>WORKFLOW</b>Imagery Acquisition → Band Processing → Supervised Classification → Topology → Final LC Map</div>
+      <div class="proj-tech-row"><span class="tech-pill">RapidEye · Landsat</span><span class="tech-pill">CORINE LC</span><span class="tech-pill">ArcGIS</span><span class="tech-pill">QA/QC</span></div>
+      <div class="proj-panel-wrap">
+        <div class="proj-panel" onclick="event.stopPropagation()">
+          <div>
+            <p class="panel-section-title">Methodology</p>
+            <ul class="panel-list">
+              <li>RapidEye 5-band multispectral at 5m resolution</li>
+              <li>Landsat 8 for regional contextualisation</li>
+              <li>CORINE Land Cover Level III classification</li>
+              <li>Supervised classification + ground truth validation</li>
+              <li>Topology correction and final cartographic consolidation</li>
+            </ul>
+            <p class="panel-note">Study area: Casanare department — a key agricultural and oil-producing region of the Colombian Eastern Plains (Llanos Orientales).</p>
+          </div>
+          <div>
+            <p class="panel-section-title">Study Area</p>
+            <div class="proj-map-slot">
+              <div id="map-optidron" style="width:100%;height:100%;"></div>
+              <div class="slot-lbl">CASANARE · COLOMBIA · 5.34°N 72.40°W</div>
+            </div>
+<p class="slot-add-hint">↑ Click markers to fly to location</p>
+          </div>
+        </div>
+        <!-- IMAGE GALLERY ZONE -->
+        <div class="img-gallery" onclick="event.stopPropagation()">
+          <p class="img-gallery-label">Visual Outputs · CORINE Classification · Satellite Composites · Land Cover Maps</p>
+          <div class="img-gallery-grid" id="gallery-optidron">
+            <div class="img-slot" id="slot-optidron-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>ORTHOMOSAIC<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'optidron-1')">
+            </div>
+            <div class="img-slot" id="slot-optidron-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/></svg>
+              <span>DSM / TERRAIN<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'optidron-2')">
+            </div>
+            <div class="img-slot" id="slot-optidron-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20"/></svg>
+              <span>MAP OUTPUTS<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'optidron-3')">
+            </div>
+            <div class="img-slot" id="slot-optidron-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              <span>BEFORE / AFTER<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'optidron-4')">
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 4: Servinformación -->
+    <article class="proj-card reveal" data-filter="environmental" onclick="toggleProj(this,'servinf')" tabindex="0" aria-expanded="false">
+      <div class="proj-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> EXPAND</div>
+      <div class="proj-meta-row"><span class="proj-type">Enterprise GDB</span><span>Colombia · 2020–2021</span></div>
+      <h4>Energy Infrastructure · Geodatabase Management</h4>
+      <div class="proj-client">Servinformación S.A.S · EMCALI Public Utility</div>
+      <p>Enterprise geodatabase management for a public energy utility serving 2.5M+ residents. Field data integration, attribute validation and GDB structuring for operational decision-making.</p>
+      <div class="proj-workflow"><b>WORKFLOW</b>Field Collection → Cleaning → Attribute Validation → GDB Integration → Operational Use</div>
+      <div class="proj-tech-row"><span class="tech-pill">ArcGIS</span><span class="tech-pill">Enterprise GDB</span><span class="tech-pill">QA/QC</span><span class="tech-pill">Python scripts</span></div>
+      <div class="proj-panel-wrap">
+        <div class="proj-panel" onclick="event.stopPropagation()">
+          <div>
+            <p class="panel-section-title">Scope</p>
+            <ul class="panel-list">
+              <li>Cleaning and structuring of field-collected datasets</li>
+              <li>Python scripts detecting null/empty attributes across GDB tables</li>
+              <li>Integration of updated features into enterprise GDB</li>
+              <li>Coordination between field teams and GIS administrators</li>
+              <li>Foundation experience in operational GIS for critical infrastructure</li>
+            </ul>
+            <p class="panel-note">EMCALI manages electricity, water and telecommunications for Cali — 2.5M+ residents.</p>
+          </div>
+          <div>
+            <p class="panel-section-title">Location</p>
+            <div class="proj-map-slot">
+              <div id="map-servinf" style="width:100%;height:100%;"></div>
+              <div class="slot-lbl">CALI · COLOMBIA · 3.45°N 76.53°W</div>
+            </div>
+<p class="slot-add-hint">↑ Click markers to fly to location</p>
+          </div>
+        </div>
+        <!-- IMAGE GALLERY ZONE -->
+        <div class="img-gallery" onclick="event.stopPropagation()">
+          <p class="img-gallery-label">Visual Outputs · GDB Diagrams · Validation Scripts · Infrastructure Maps</p>
+          <div class="img-gallery-grid" id="gallery-servinf">
+            <div class="img-slot" id="slot-servinf-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>ORTHOMOSAIC<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'servinf-1')">
+            </div>
+            <div class="img-slot" id="slot-servinf-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/></svg>
+              <span>DSM / TERRAIN<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'servinf-2')">
+            </div>
+            <div class="img-slot" id="slot-servinf-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20"/></svg>
+              <span>MAP OUTPUTS<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'servinf-3')">
+            </div>
+            <div class="img-slot" id="slot-servinf-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              <span>BEFORE / AFTER<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'servinf-4')">
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 5: Landslide Research (full width) -->
+    <article class="proj-card wide reveal" data-filter="research" onclick="toggleProj(this,'research')" tabindex="0" aria-expanded="false">
+      <div class="proj-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg> EXPAND</div>
+      <div class="proj-meta-row"><span class="proj-type">Research · RPAS</span><span>Cundinamarca, Colombia</span></div>
+      <h4>Landslide Monitoring &amp; Terrain Deformation Analysis</h4>
+      <div class="proj-client">Research Project · Quebradanegra, Cundinamarca</div>
+      <p>Multi-temporal drone photogrammetry for landslide dynamics — DSM comparisons to analyse terrain deformation, hydrological influence, displacement direction and magnitude over time. Located in a complex geomorphological region of the Colombian Andes.</p>
+      <div class="proj-workflow"><b>RESEARCH WORKFLOW</b>RPAS Flights → Image Acquisition → Photogrammetry → DSM Generation → Multi-temporal Analysis → Deformation Mapping</div>
+      <div class="proj-tech-row">
+        <span class="tech-pill">DJI Phantom 4 Pro V2</span>
+        <span class="tech-pill">Pix4D</span>
+        <span class="tech-pill">Agisoft Metashape</span>
+        <span class="tech-pill">ArcMap</span>
+        <span class="tech-pill">Multi-temporal DSM</span>
+      </div>
+      <div class="proj-panel-wrap">
+        <div class="proj-panel" style="grid-template-columns:1fr 1fr 1fr;" onclick="event.stopPropagation()">
+          <div>
+            <p class="panel-section-title">Sub-models Built</p>
+            <ul class="panel-list">
+              <li>Heights Sub-model: elevation and DSM change analysis</li>
+              <li>Water Bodies Sub-model: hydrological influence mapping</li>
+              <li>Vegetation change between acquisition dates</li>
+              <li>Direction–Time Sub-model: displacement direction over time</li>
+              <li>Distance–Time Sub-model: movement magnitude per period</li>
+            </ul>
+          </div>
+          <div>
+            <p class="panel-section-title">Methodology</p>
+            <ul class="panel-list">
+              <li>Multiple RPAS campaigns with DJI Phantom 4 Pro V2</li>
+              <li>Parallel processing in Pix4D and Agisoft Metashape</li>
+              <li>Co-registration of multi-date DSMs for change detection</li>
+              <li>Slope change and displacement vector analysis in ArcMap</li>
+              <li>Complex geomorphological terrain in Cundinamarca, Colombia</li>
+            </ul>
+          </div>
+          <div>
+            <p class="panel-section-title">Study Area</p>
+            <div class="proj-map-slot" style="height:200px;">
+              <div id="map-research" style="width:100%;height:100%;"></div>
+              <div class="slot-lbl">CUNDINAMARCA · COLOMBIA · 4.90°N 74.50°W</div>
+            </div>
+            <p class="slot-add-hint">↑ Click marker to fly to location</p>
+          </div>
+        </div>
+        <!-- IMAGE GALLERY ZONE -->
+        <div class="img-gallery" onclick="event.stopPropagation()">
+          <p class="img-gallery-label">Visual Outputs · DSM Comparisons · Orthomosaics · Deformation Maps</p>
+          <div class="img-gallery-grid" id="gallery-research">
+            <div class="img-slot" id="slot-research-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>ORTHOMOSAIC T1<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'research-1')">
+            </div>
+            <div class="img-slot" id="slot-research-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>ORTHOMOSAIC T2<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'research-2')">
+            </div>
+            <div class="img-slot" id="slot-research-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/></svg>
+              <span>DSM COMPARISON<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'research-3')">
+            </div>
+            <div class="img-slot" id="slot-research-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              <span>DEFORMATION MAP<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'research-4')">
+            </div>
+            <div class="img-slot" id="slot-research-5">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a10 10 0 100 20"/><path d="M12 6v6l4 2"/></svg>
+              <span>DISPLACEMENT<br>DROP / CLICK</span>
+              <input type="file" accept="image/*" onchange="previewImg(this,'research-5')">
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div><!-- /proj-grid -->
+</section>
+
+<!-- DIVIDER -->
+<div class="ch-divider reveal"><div class="ch-divider-meta">05 — Credentials</div><div class="ch-divider-line"></div></div>
+
+<!-- ══════════════════════════════════════
+     CREDENTIALS SECTION
+══════════════════════════════════════ -->
+<section class="section" id="credentials" aria-label="Professional credentials">
+  <div class="section-label reveal">05 / Credentials</div>
+  <h2 class="section-title reveal"><em>Verified</em> professional standing.</h2>
+  <div class="cred-grid">
+    <div class="cred-card reveal">
+      <div class="cred-card-icon">CASA · Australia</div>
+      <h4>Remote Pilot Licence (RePL)</h4>
+      <p>CASA-certified drone operator licensed for commercial RPAS operations in Australian airspace. Multi-rotor operations, flight planning, safety management.</p>
+    </div>
+    <div class="cred-card reveal">
+      <div class="cred-card-icon">SSSI · Australia</div>
+      <h4>Spatial Science Technician Assessment</h4>
+      <p>Positive skills assessment by the Surveying and Spatial Sciences Institute confirming qualification as Spatial Science Technician for Australian employment.</p>
+    </div>
+    <div class="cred-card reveal">
+      <div class="cred-card-icon">Colombia · Degree</div>
+      <h4>Geographic &amp; Environmental Engineer</h4>
+      <p>Professional engineering degree specialising in GIS, environmental analysis, territorial planning and geospatial data science.</p>
+    </div>
+    <div class="cred-card reveal">
+      <div class="cred-card-icon">ArcGIS · ESRI</div>
+      <h4>StoryMaps Portfolio Evidence</h4>
+      <p>Published geospatial portfolio on ArcGIS StoryMaps documenting real project workflows, outputs and professional experience across mining and environment sectors.</p>
+      <a href="https://storymaps.arcgis.com/stories/9469c123950841a4892f6bd3a9e7daa7" target="_blank" rel="noopener" style="display:inline-block;margin-top:.8rem;" class="cert-badge">View StoryMap →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     CONTACT SECTION
+══════════════════════════════════════ -->
+<section class="section-full" id="contact" aria-label="Contact">
+  <div class="section-label reveal">06 / Contact</div>
+  <div class="contact-grid">
+    <div>
+      <h2 class="reveal">Let's map<br><em>what's next.</em></h2>
+      <p class="contact-lede reveal">Based in Perth and open to opportunities in GIS, remote sensing, drone mapping, and mining or environmental sector projects. Ready to deliver spatial intelligence from day one.</p>
+      <!-- Contact form -->
+      <form class="contact-form reveal" id="contact-form" action="https://formspree.io/f/mwvanqnl" method="POST" aria-label="Contact form" novalidate>
+        <input type="hidden" name="_subject" value="GeoForgeSpatial Portfolio Enquiry">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cf-name">Name</label>
+            <input type="text" id="cf-name" name="name" placeholder="Your name" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cf-email">Email</label>
+            <input type="email" id="cf-email" name="email" placeholder="your@email.com" required autocomplete="email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cf-subject">Subject</label>
+          <input type="text" id="cf-subject" name="subject" placeholder="GIS role / project enquiry / collaboration">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cf-message">Message</label>
+          <textarea id="cf-message" name="message" placeholder="Tell me about the opportunity or project..." required></textarea>
+        </div>
+        <div id="form-status" class="form-status" role="alert" aria-live="polite"></div>
+        <button type="submit" class="btn btn-primary" id="form-submit">
+          Send Message
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <div>
+      <div class="contact-links reveal">
+        <a href="mailto:juanbarreracaicedo@gmail.com" class="contact-link">
+          <span class="cl-label">Email · Primary</span>
+          <span class="cl-value">juanbarreracaicedo@gmail.com</span>
+        </a>
+        <a href="https://www.linkedin.com/in/juanbarrerac" target="_blank" rel="noopener" class="contact-link">
+          <span class="cl-label">LinkedIn · Professional Network</span>
+          <span class="cl-value">/in/juanbarrerac →</span>
+        </a>
+        <a href="https://github.com/juanbarrera07" target="_blank" rel="noopener" class="contact-link">
+          <span class="cl-label">GitHub · Open Source</span>
+          <span class="cl-value">github.com/juanbarrera07 →</span>
+        </a>
+        <div class="contact-link" style="cursor:default;">
+          <span class="cl-label">Location</span>
+          <span class="cl-value">Perth, WA · 31.9523°S 115.8613°E</span>
+        </div>
+      </div>
+      <a href="https://storymaps.arcgis.com/stories/9469c123950841a4892f6bd3a9e7daa7" target="_blank" rel="noopener" class="storymap-cta reveal">
+        <div class="sc-label">ArcGIS StoryMaps · Portfolio Evidence</div>
+        <div class="sc-title">Mining &amp; Environmental GIS Analyst</div>
+        <div class="sc-sub">Drone Mapping · Spatial GIS · Interactive ArcGIS portfolio →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div>© 2026 GeoForgeSpatial · Juan Barrera · Perth, Western Australia</div>
+  <div style="display:flex;gap:1.2rem;">
+    <a href="https://github.com/juanbarrera07" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.linkedin.com/in/juanbarrerac" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="mailto:juanbarreracaicedo@gmail.com">Email</a>
+  </div>
+</footer>
+
+
+<!-- ═══════ SCRIPTS ═══════ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(function(){
+'use strict';
+
+/* ── GLOBALS ── */
+const CARTO_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+const TOPO_OVL   = 'https://tile.opentopomap.org/{z}/{x}/{y}.png';
+const ATTR = '';
+
+const STOPS = [
+  { ll:[4.7110,-74.0721],   label:'Bogotá, Colombia',     role:'Geographic & Environmental Engineering', year:'2015 — 2020' },
+  { ll:[-36.8270,-73.0498], label:'Concepción, Chile',    role:'International Academic Exchange',        year:'2019' },
+  { ll:[3.4516,-76.5320],   label:'Cali, Colombia',       role:'GIS Analyst · Servinformación / EMCALI', year:'2020 — 2021' },
+  { ll:[5.3378,-72.3959],   label:'Casanare, Colombia',   role:'Land Cover Mapping · Optidron S.A',      year:'2021 — 2022' },
+  { ll:[4.7110,-74.5721],   label:'Colombia (Multi-site)', role:'Environmental GIS · MCS Consulting',    year:'2022 — 2024' },
+  { ll:[-31.9523,115.8613], label:'Perth, WA — Australia', role:'Geospatial Engineer · Current',        year:'2025 → Now', current:true },
+];
+
+const PROJ_LOCS = {
+  'wa-mine':  { ll:[-31.9523,115.8613], zoom:10 },
+  'mcs':      { ll:[4.7110,-74.0721],   zoom:5  },
+  'optidron': { ll:[5.3378,-72.3959],   zoom:7  },
+  'servinf':  { ll:[3.4516,-76.5320],   zoom:10 },
+  'research': { ll:[4.9000,-74.5000],   zoom:8  },
+};
+
+let journeyMap   = null;
+let journeyMarkers = [];
+let journeyRoute = null;
+let journeyInited = false;
+let perthMap     = null;
+const projMaps   = {};
+
+/* ── TILE LAYERS ── */
+function addTileLayers(map, topoOpacity = 0) {
+  L.tileLayer(CARTO_DARK, { subdomains:'abcd', maxZoom:19, attribution:ATTR }).addTo(map);
+  if (topoOpacity > 0) {
+    L.tileLayer(TOPO_OVL, { maxZoom:17, opacity:topoOpacity, attribution:ATTR }).addTo(map);
+  }
+}
+
+function makeDot(isCurrent) {
+  return L.divIcon({
+    className:'lf-marker',
+    html:`<div class="lf-dot${isCurrent?' current':''}"></div>`,
+    iconSize:[14,14], iconAnchor:[7,7],
+  });
+}
+
+/* ── PERTH HERO MAP ── */
+function initPerthMap() {
+  perthMap = L.map('perth-map', {
+    zoomControl:false, scrollWheelZoom:false,
+    attributionControl:false, dragging:false,
+    doubleClickZoom:false, keyboard:false,
+  }).setView([-31.9523,115.8613], 10);
+  addTileLayers(perthMap, 0.28);
+  L.marker([-31.9523,115.8613], { icon:makeDot(true) }).addTo(perthMap);
+}
+
+/* ── JOURNEY MAP ── */
+function initJourneyMap() {
+  journeyMap = L.map('journey-map', {
+    zoomControl:true, scrollWheelZoom:false,
+    attributionControl:true,
+  });
+  addTileLayers(journeyMap, 0.28);
+
+  // Ctrl+scroll zoom
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Control' && journeyMap) journeyMap.scrollWheelZoom.enable();
+  });
+  document.addEventListener('keyup', e => {
+    if (e.key === 'Control' && journeyMap) journeyMap.scrollWheelZoom.disable();
+  });
+  const jMapEl = document.getElementById('journey-map');
+  if (jMapEl) jMapEl.addEventListener('mouseleave', () => {
+    if (journeyMap) journeyMap.scrollWheelZoom.disable();
+  });
+
+  STOPS.forEach((s, i) => {
+    const m = L.marker(s.ll, { icon:makeDot(!!s.current) })
+      .addTo(journeyMap)
+      .bindPopup(`<b>${s.label}</b>${s.role}<br><em>${s.year}</em>`);
+    journeyMarkers.push(m);
+  });
+
+  journeyMap.fitBounds(L.latLngBounds(STOPS.map(s => s.ll)), { padding:[60,60] });
+
+  // Animate route line
+  journeyRoute = L.polyline([STOPS[0].ll], {
+    color:'#c97f3e', weight:1.8, opacity:.6, dashArray:'7,5',
+  }).addTo(journeyMap);
+  let idx = 0;
+  (function drawNext() {
+    if (idx < STOPS.length - 1) {
+      idx++;
+      journeyRoute.addLatLng(STOPS[idx].ll);
+      setTimeout(drawNext, 380);
+    }
+  })();
+}
+
+/* ── FLY TO STOP ── */
+window.flyToStop = function(idx) {
+  if (!journeyMap) return;
+  const s = STOPS[idx];
+  journeyMap.flyTo(s.ll, idx === 5 ? 9 : 5, { duration:1.4 });
+  journeyMarkers[idx].openPopup();
+  // Highlight list item
+  document.querySelectorAll('.journey-stop').forEach((el,i) =>
+    el.classList.toggle('active', i === idx));
+};
+
+/* ── YOUTUBE LAZY EMBED ── */
+window.loadYT = function() {
+  const facade = document.getElementById('yt-facade');
+  const player = document.getElementById('yt-player');
+  const iframe = document.getElementById('yt-iframe');
+  if (!facade || !player || !iframe) return;
+  // Set autoplay=1 so it starts playing immediately on click
+  iframe.src = 'https://www.youtube.com/embed/7FNTS2apoOY?autoplay=1&rel=0&modestbranding=1&color=white';
+  facade.style.opacity = '0';
+  facade.style.pointerEvents = 'none';
+  setTimeout(() => {
+    facade.style.display = 'none';
+    player.style.display = 'block';
+  }, 300);
+};
+
+/* ── EXPANDABLE PROJECTS ── */
+function initProjMap(id) {
+  if (projMaps[id]) { try { projMaps[id].invalidateSize(); } catch(e){} return; }
+  const data  = PROJ_LOCS[id];
+  const el    = document.getElementById('map-' + id);
+  if (!data || !el) return;
+  const m = L.map(el, {
+    zoomControl:false, scrollWheelZoom:false,
+    attributionControl:false, dragging:false, doubleClickZoom:false,
+  }).setView(data.ll, data.zoom);
+  addTileLayers(m, 0.28);
+  L.marker(data.ll, { icon:makeDot(false) }).addTo(m);
+  projMaps[id] = m;
+}
+
+window.toggleProj = function(el, id) {
+  const wasExpanded = el.classList.contains('expanded');
+  // Collapse all
+  document.querySelectorAll('.proj-card.expanded').forEach(p => {
+    p.classList.remove('expanded');
+    if (!p.classList.contains('wide')) p.style.gridColumn = '';
+    const pw = p.querySelector('.proj-panel-wrap');
+    if (pw) pw.style.maxHeight = '0';
+    p.setAttribute('aria-expanded','false');
+  });
+  if (wasExpanded) return;
+  // Expand this
+  el.classList.add('expanded');
+  if (!el.classList.contains('wide')) el.style.gridColumn = '1 / -1';
+  el.setAttribute('aria-expanded','true');
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  setTimeout(() => {
+    const pw = el.querySelector('.proj-panel-wrap');
+    if (pw) pw.style.maxHeight = (pw.scrollHeight + 120) + 'px';
+    initProjMap(id);
+  }, 40);
+};
+
+/* Keyboard support for project cards */
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.proj-card').forEach(card => {
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
+      }
+    });
+  });
+});
+
+/* ── PROJECT FILTERS ── */
+/* ── IMAGE PREVIEW IN GALLERY SLOTS ── */
+window.previewImg = function(input, slotId) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const slot = document.getElementById('slot-' + slotId);
+    if (!slot) return;
+    // Remove existing preview
+    const existing = slot.querySelector('img.preview');
+    if (existing) existing.remove();
+    // Add preview
+    const img = document.createElement('img');
+    img.src = e.target.result;
+    img.className = 'preview';
+    img.alt = 'Project output';
+    slot.appendChild(img);
+    // Add remove button
+    let rmBtn = slot.querySelector('.rm-btn');
+    if (!rmBtn) {
+      rmBtn = document.createElement('button');
+      rmBtn.className = 'rm-btn';
+      rmBtn.textContent = '✕ Remove';
+      rmBtn.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        img.remove();
+        rmBtn.remove();
+        input.value = '';
+        slot.querySelector('svg').style.display = '';
+        slot.querySelector('span').style.display = '';
+      });
+      slot.appendChild(rmBtn);
+    }
+    // Hide placeholder icons
+    slot.querySelector('svg').style.display = 'none';
+    slot.querySelector('span').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+};
+
+/* Drag and drop onto img-slots */
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.img-slot').forEach(slot => {
+    slot.addEventListener('dragover', e => { e.preventDefault(); slot.style.borderColor = 'var(--terra)'; });
+    slot.addEventListener('dragleave', () => { slot.style.borderColor = ''; });
+    slot.addEventListener('drop', e => {
+      e.preventDefault();
+      slot.style.borderColor = '';
+      const file = e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      const input = slot.querySelector('input[type=file]');
+      // Create DataTransfer to simulate file input change
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change'));
+    });
+  });
+});
+
+window.filterProjects = function(filter, btn) {
+  document.querySelectorAll('.proj-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Collapse any expanded card first
+  document.querySelectorAll('.proj-card.expanded').forEach(p => {
+    p.classList.remove('expanded');
+    if (!p.classList.contains('wide')) p.style.gridColumn = '';
+    const pw = p.querySelector('.proj-panel-wrap');
+    if (pw) pw.style.maxHeight = '0';
+    p.setAttribute('aria-expanded','false');
+  });
+  const cards = document.querySelectorAll('.proj-card');
+  // First pass: make all visible
+  cards.forEach(c => { c.style.display = 'flex'; });
+  // Second pass: fade in/out
+  requestAnimationFrame(() => {
+    cards.forEach(card => {
+      const f = (card.dataset.filter || '').split(' ');
+      const show = filter === 'all' || f.includes(filter);
+      card.style.transition = 'opacity .35s, transform .35s';
+      if (show) {
+        card.style.opacity = '1';
+        card.style.transform = '';
+        card.style.pointerEvents = '';
+      } else {
+        card.style.opacity = '0';
+        card.style.transform = 'scale(.96)';
+        card.style.pointerEvents = 'none';
+        setTimeout(() => {
+          const ff = (card.dataset.filter || '').split(' ');
+          const stillHide = filter !== 'all' && !ff.includes(filter);
+          if (stillHide) card.style.display = 'none';
+        }, 370);
+      }
+    });
+  });
+};
+
+/* ── SECTION NAV ── */
+const NAV_SECTIONS = ['home','about','journey','skills','projects','credentials','contact'];
+
+window.navTo = function(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const navH  = document.getElementById('nav')?.offsetHeight || 64;
+  const top   = el.getBoundingClientRect().top + window.scrollY - navH - 12;
+  window.scrollTo({ top, behavior:'smooth' });
+};
+
+function setNavActive(id) {
+  document.querySelectorAll('.nav-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.target === id));
+  document.querySelectorAll('.dot-nav-item').forEach(d =>
+    d.classList.toggle('active', d.dataset.target === id));
+}
+
+/* ── INTERSECTION OBSERVER: SECTION NAV ── */
+const secObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) setNavActive(e.target.id);
+  });
+}, { threshold:0.2 });
+
+NAV_SECTIONS.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) secObs.observe(el);
+});
+
+/* ── LAZY INIT JOURNEY MAP ── */
+const journeyObs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !journeyInited) {
+    journeyInited = true;
+    initJourneyMap();
+  }
+}, { threshold:0.1 });
+const jSection = document.getElementById('journey');
+if (jSection) journeyObs.observe(jSection);
+
+/* ── SCROLL REVEAL ── */
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 52);
+      revObs.unobserve(e.target);
+    }
+  });
+}, { threshold:0.1, rootMargin:'0px 0px -55px 0px' });
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+/* ── NAV SCROLL EFFECT ── */
+const navEl = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  if (navEl) navEl.classList.toggle('scrolled', window.scrollY > 20);
+}, { passive:true });
+
+/* ── CONTACT FORM ── */
+const form = document.getElementById('contact-form');
+const formStatus = document.getElementById('form-status');
+const formSubmit = document.getElementById('form-submit');
+
+if (form) {
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    formSubmit.textContent = 'Sending...';
+    formSubmit.disabled = true;
+    formStatus.className = 'form-status';
+    formStatus.style.display = 'none';
+
+    try {
+      const res = await fetch(form.action, {
+        method:'POST',
+        body:new FormData(form),
+        headers:{ 'Accept':'application/json' },
+      });
+      if (res.ok) {
+        formStatus.textContent = '✓ Message sent — I\'ll get back to you soon.';
+        formStatus.className = 'form-status success';
+        form.reset();
+      } else {
+        throw new Error('Server error');
+      }
+    } catch {
+      formStatus.textContent = '⚠ Could not send. Please email directly: juanbarreracaicedo@gmail.com';
+      formStatus.className = 'form-status error';
+    }
+
+    formSubmit.textContent = 'Send Message';
+    formSubmit.disabled = false;
+    formStatus.style.display = 'block';
+  });
+}
+
+/* ── INIT ── */
+function init() {
+  if (typeof L === 'undefined') { setTimeout(init, 100); return; }
+  initPerthMap();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
